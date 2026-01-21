@@ -1,0 +1,136 @@
+{
+  "identity": {
+    "name": "ILWU Local 4 Golf Tournament",
+    "tone": "Professional, Welcoming, Union-Strong, Organized",
+    "aesthetic": "The 'Union Links' - A blend of bold union reliability and classic golf tradition. High contrast, sturdy typography, and vibrant outdoor colors.",
+    "theme_mode": "light"
+  },
+  "typography": {
+    "font_family": {
+      "heading": "Barlow Condensed, sans-serif",
+      "body": "Inter, sans-serif"
+    },
+    "imports": [
+      "@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600&display=swap');"
+    ],
+    "scale": {
+      "h1": "text-5xl md:text-7xl font-bold tracking-tight uppercase",
+      "h2": "text-3xl md:text-5xl font-bold tracking-tight uppercase",
+      "h3": "text-2xl md:text-3xl font-semibold tracking-normal",
+      "body": "text-base md:text-lg leading-relaxed",
+      "label": "text-sm font-bold uppercase tracking-wider text-muted-foreground"
+    }
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "DEFAULT": "#1a365d",
+        "foreground": "#ffffff",
+        "description": "ILWU Navy Blue - Used for primary buttons, headers, and strong branding elements."
+      },
+      "secondary": {
+        "DEFAULT": "#f7dc00",
+        "foreground": "#1a365d",
+        "description": "Union Yellow - Used for accents, highlights, and 'Join Team' calls to action. High energy."
+      },
+      "accent": {
+        "DEFAULT": "#2d5a27",
+        "foreground": "#ffffff",
+        "description": "Fairway Green - Used for success states, golf-specific iconography, and decorative elements."
+      },
+      "background": {
+        "DEFAULT": "#f8f9fa",
+        "paper": "#ffffff",
+        "subtle": "#e2e8f0"
+      },
+      "text": {
+        "primary": "#0f172a",
+        "secondary": "#475569",
+        "muted": "#94a3b8"
+      }
+    },
+    "gradients": {
+      "hero": "bg-gradient-to-br from-[#1a365d] to-[#0f2342]",
+      "gold_shine": "bg-gradient-to-r from-[#f7dc00] via-[#ffe55c] to-[#f7dc00]"
+    }
+  },
+  "layout": {
+    "spacing": {
+      "container_padding": "p-6 md:p-12 lg:p-24",
+      "section_gap": "gap-12 md:gap-24",
+      "element_gap": "gap-4 md:gap-8"
+    },
+    "grid_system": {
+      "bento_hero": "grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6",
+      "form_layout": "max-w-2xl mx-auto space-y-8",
+      "dashboard_grid": "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6"
+    },
+    "border_radius": {
+      "default": "rounded-lg",
+      "button": "rounded-md",
+      "card": "rounded-xl"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#1a365d] text-white hover:bg-[#1a365d]/90 shadow-lg hover:shadow-xl transition-all duration-300 font-bold uppercase tracking-wide py-6 px-8",
+      "secondary": "bg-[#f7dc00] text-[#1a365d] hover:bg-[#f7dc00]/90 font-bold uppercase tracking-wide py-6 px-8",
+      "outline": "border-2 border-[#1a365d] text-[#1a365d] hover:bg-[#1a365d] hover:text-white font-bold uppercase tracking-wide py-6 px-8"
+    },
+    "cards": {
+      "feature": "bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 p-8 flex flex-col gap-4",
+      "highlight": "bg-[#1a365d] text-white p-8 shadow-xl relative overflow-hidden",
+      "stat": "bg-white border-l-4 border-[#f7dc00] p-6 shadow-sm"
+    },
+    "inputs": {
+      "default": "h-12 bg-slate-50 border-slate-200 focus:border-[#1a365d] focus:ring-[#1a365d] transition-all duration-200"
+    }
+  },
+  "assets": {
+    "logo_url": "https://customer-assets.emergentagent.com/job_greenmeadows-golf/artifacts/n4xo0dyh_IMG_1411.png",
+    "images": {
+      "hero_bg": "https://images.pexels.com/photos/5384079/pexels-photo-5384079.jpeg",
+      "camaraderie": "https://images.pexels.com/photos/9207196/pexels-photo-9207196.jpeg",
+      "trophy": "https://images.pexels.com/photos/6370078/pexels-photo-6370078.jpeg",
+      "golf_action": "https://images.pexels.com/photos/15376160/pexels-photo-15376160.jpeg"
+    },
+    "icons": "Use 'lucide-react' for all UI icons. Use 'Trophy', 'Users', 'Calendar', 'MapPin', 'CheckCircle', 'Shield' heavily."
+  },
+  "pages": {
+    "landing": {
+      "structure": [
+        "Hero Section: Full height, Navy gradient or Hero Image overlay. Big bold title. Two CTAs: 'Register Individual' (Primary) and 'Register Team' (Secondary).",
+        "Info Bento Grid: 4-cell grid showing Date (TBD), Location (Club Green Meadows), Price ($150/$600), and Format (4-person scramble).",
+        "About Section: Brief text about ILWU Local 4 and the event purpose.",
+        "Footer: Simple, dark navy, union contact info."
+      ]
+    },
+    "registration": {
+      "structure": [
+        "Split Layout: Left side is the form (clean, white background), Right side is a sticky image (Golf Action) with a quote or stat.",
+        "Form Steps: 1. Player Info, 2. Team Selection (Create or Join), 3. Confirmation.",
+        "Payment Notice: Prominent yellow alert box stating 'Payment collected at Credit Union or Hall'."
+      ]
+    },
+    "admin": {
+      "structure": [
+        "Dashboard Shell: Sidebar navigation (Teams, Players, Settings).",
+        "Stats Row: Total Players, Total Teams, Spots Remaining.",
+        "Data Table: Dense, sortable table of registrations. Status badges (Assigned/Unassigned)."
+      ]
+    }
+  },
+  "accessibility": {
+    "contrast": "Ensure all text on Navy background is White. Text on Yellow background must be Navy (not white).",
+    "focus_states": "Visible focus rings using the Yellow brand color.",
+    "labels": "All form inputs must have visible labels."
+  },
+  "universal_guidelines": [
+    "Do not use generic 'Bootstrap' layouts. Use the 'Bento' grid principles.",
+    "Use 'Barlow Condensed' for all headings to give that 'Sport/Union' feel.",
+    "Always add 'data-testid' to interactive elements.",
+    "Use 'sonner' for toast notifications.",
+    "Do not use gradients for text.",
+    "Ensure the 'Payment' warning is visible but not alarming - use the Union Yellow for this notice."
+  ]
+}
