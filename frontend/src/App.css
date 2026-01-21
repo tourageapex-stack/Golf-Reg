@@ -1,34 +1,55 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+/* Custom App Styles */
+.hero-overlay {
+    background: linear-gradient(to bottom right, rgba(26, 54, 93, 0.95), rgba(15, 35, 66, 0.9));
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
+.btn-primary {
+    @apply bg-navy text-white hover:bg-navy-light shadow-lg hover:shadow-xl transition-all duration-300 font-bold uppercase tracking-wide;
+}
+
+.btn-secondary {
+    @apply bg-union-yellow text-navy hover:bg-union-yellow-light font-bold uppercase tracking-wide;
+}
+
+.card-feature {
+    @apply bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300;
+}
+
+.card-highlight {
+    @apply bg-navy text-white shadow-xl relative overflow-hidden;
+}
+
+.input-default {
+    @apply h-12 bg-slate-50 border-slate-200 focus:border-navy focus:ring-navy transition-all duration-200;
+}
+
+/* Bento Grid */
+.bento-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .bento-grid {
+        grid-template-columns: repeat(12, 1fr);
+        gap: 1.5rem;
     }
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+/* Animation classes */
+.fade-in {
+    opacity: 0;
+    animation: fadeIn 0.5s ease-out forwards;
 }
 
-.App-link {
-    color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
+@keyframes fadeIn {
     to {
-        transform: rotate(360deg);
+        opacity: 1;
     }
+}
+
+/* Golf ball pattern for decorative elements */
+.golf-pattern {
+    background-image: radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 2px, transparent 2px);
+    background-size: 20px 20px;
 }
