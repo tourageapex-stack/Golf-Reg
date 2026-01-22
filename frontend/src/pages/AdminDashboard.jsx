@@ -9,8 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Users, Trophy, LogOut, Trash2, Crown, Home, 
-  RefreshCw, CheckCircle, AlertCircle 
+  RefreshCw, CheckCircle, AlertCircle, Download, FileSpreadsheet
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,6 +83,36 @@ export default function AdminDashboard() {
   const handleLogout = () => {
     sessionStorage.removeItem("adminAuth");
     navigate("/admin");
+  };
+
+  const handleExport = async (type) => {
+    const auth = sessionStorage.getItem("adminAuth");
+    if (!auth) return;
+    
+    try {
+      const endpoint = type === "players" ? "export/csv" : "export/teams-csv";
+      const response = await fetch(`${API}/admin/${endpoint}`, {
+        headers: { Authorization: `Basic ${auth}` }
+      });
+      
+      if (!response.ok) throw new Error("Export failed");
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = type === "players" 
+        ? `ilwu_golf_registrations_${new Date().toISOString().split('T')[0]}.csv`
+        : `ilwu_golf_teams_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      toast.success(`${type === "players" ? "Players" : "Teams"} exported successfully!`);
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Failed to export data");
+    }
   };
 
   const handleDelete = async () => {
@@ -196,8 +232,30 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        {/* Refresh Button */}
-        <div className="flex justify-end mb-4">
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-3 mb-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="border-[#2d5a27] text-[#2d5a27] hover:bg-[#2d5a27] hover:text-white"
+                data-testid="export-btn"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExport("players")} data-testid="export-players-btn">
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Export All Players
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("teams")} data-testid="export-teams-btn">
+                <Trophy className="h-4 w-4 mr-2" />
+                Export Teams Summary
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button 
             variant="outline" 
             onClick={fetchData} 
