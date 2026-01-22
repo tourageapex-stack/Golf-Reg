@@ -334,7 +334,7 @@ async def get_tournament_info():
     }
 
 @api_router.post("/register/individual", response_model=RegistrationResponse)
-async def register_individual(player_data: IndividualRegistration):
+async def register_individual(player_data: IndividualRegistration, background_tasks: BackgroundTasks):
     """Register an individual player - will be assigned to a team"""
     # Check if registration is still open
     team_count = await db.teams.count_documents({})
@@ -372,6 +372,17 @@ async def register_individual(player_data: IndividualRegistration):
         {"$set": {"players": new_players, "is_full": is_full}}
     )
     
+    # Send confirmation email in background
+    background_tasks.add_task(
+        send_confirmation_email,
+        player_data.email,
+        f"{player_data.first_name} {player_data.last_name}",
+        team["team_number"],
+        is_captain,
+        False,
+        1
+    )
+    
     return RegistrationResponse(
         success=True,
         message=f"Successfully registered! You have been assigned to Team {team['team_number']}." + 
@@ -382,7 +393,7 @@ async def register_individual(player_data: IndividualRegistration):
     )
 
 @api_router.post("/register/team", response_model=RegistrationResponse)
-async def register_team(team_data: TeamRegistration):
+async def register_team(team_data: TeamRegistration, background_tasks: BackgroundTasks):
     """Register a team of 1-4 players"""
     if len(team_data.players) < 1 or len(team_data.players) > MAX_PLAYERS_PER_TEAM:
         raise HTTPException(
@@ -418,6 +429,17 @@ async def register_team(team_data: TeamRegistration):
         player_dict = player.model_dump()
         await db.players.insert_one(player_dict)
         player_ids.append(player.id)
+        
+        # Send confirmation email to each player
+        background_tasks.add_task(
+            send_confirmation_email,
+            player_data.email,
+            f"{player_data.first_name} {player_data.last_name}",
+            team_number,
+            (i == 0),  # is_captain
+            True,  # is_team_reg
+            len(team_data.players)
+        )
     
     # Update team with players
     is_full = len(player_ids) >= MAX_PLAYERS_PER_TEAM
