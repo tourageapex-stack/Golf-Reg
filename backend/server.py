@@ -309,6 +309,15 @@ async def verify_admin(credentials: HTTPBasicCredentials = Depends(security)):
 async def root():
     return {"message": "ILWU Local 4 Golf Tournament API"}
 
+@api_router.get("/email-status")
+async def get_email_status():
+    """Check if email is configured"""
+    return {
+        "email_enabled": EMAIL_ENABLED,
+        "sender": GMAIL_USER if EMAIL_ENABLED else None,
+        "message": "Email confirmations enabled" if EMAIL_ENABLED else "Email not configured - add GMAIL_USER and GMAIL_APP_PASSWORD to .env"
+    }
+
 @api_router.get("/tournament-info")
 async def get_tournament_info():
     """Get tournament information and availability"""
