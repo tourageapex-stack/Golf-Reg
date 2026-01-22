@@ -206,7 +206,7 @@ ILWU Local 4
                 <h3>Event Details</h3>
                 <p><strong>Location:</strong> Club Green Meadows</p>
                 <p><strong>Date:</strong> TBD (To Be Announced)</p>
-                <p><strong>Format:</strong> 4-Person Teams</p>
+                <p><strong>Format:</strong> Best Ball Scramble Shotgun start 4-Person Teams</p>
             </div>
             
             <div class="payment-box">
