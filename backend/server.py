@@ -1,5 +1,6 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -7,6 +8,8 @@ import os
 import logging
 import secrets
 import random
+import csv
+import io
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional
@@ -415,6 +418,118 @@ async def delete_team(team_id: str, username: str = Depends(verify_admin)):
     await db.teams.delete_one({"id": team_id})
     
     return {"success": True, "message": f"Team {team['team_number']} and all its players deleted"}
+
+@api_router.get("/admin/export/csv")
+async def export_registrations_csv(username: str = Depends(verify_admin)):
+    """Export all registrations to CSV"""
+    players = await db.players.find({}, {"_id": 0}).sort("registration_order", 1).to_list(500)
+    
+    # Add team number to each player
+    for player in players:
+        if player.get("team_id"):
+            team = await db.teams.find_one({"id": player["team_id"]}, {"_id": 0})
+            player["team_number"] = team["team_number"] if team else "N/A"
+        else:
+            player["team_number"] = "N/A"
+    
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Header row
+    writer.writerow([
+        "Registration #",
+        "Team #",
+        "Captain",
+        "First Name",
+        "Last Name",
+        "Email",
+        "Phone",
+        "Association",
+        "Registered At"
+    ])
+    
+    # Data rows
+    for player in players:
+        writer.writerow([
+            player.get("registration_order", ""),
+            player.get("team_number", "N/A"),
+            "Yes" if player.get("is_captain", False) else "No",
+            player.get("first_name", ""),
+            player.get("last_name", ""),
+            player.get("email", ""),
+            player.get("phone", ""),
+            player.get("association", ""),
+            player.get("created_at", "")[:10] if player.get("created_at") else ""
+        ])
+    
+    output.seek(0)
+    
+    # Return as downloadable CSV
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename=ilwu_golf_registrations_{datetime.now().strftime('%Y%m%d')}.csv"
+        }
+    )
+
+@api_router.get("/admin/export/teams-csv")
+async def export_teams_csv(username: str = Depends(verify_admin)):
+    """Export teams summary to CSV"""
+    teams = await db.teams.find({}, {"_id": 0}).sort("team_number", 1).to_list(100)
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Header row
+    writer.writerow([
+        "Team #",
+        "Status",
+        "Players",
+        "Captain",
+        "Captain Email",
+        "Captain Phone",
+        "Player 2",
+        "Player 3", 
+        "Player 4"
+    ])
+    
+    for team in teams:
+        player_ids = team.get("players", [])
+        players = await db.players.find({"id": {"$in": player_ids}}, {"_id": 0}).to_list(10)
+        players_sorted = sorted(players, key=lambda p: (not p.get("is_captain", False), p.get("registration_order", 0)))
+        
+        captain = players_sorted[0] if players_sorted else None
+        
+        row = [
+            team["team_number"],
+            "Full" if team.get("is_full", False) else f"{4 - len(players_sorted)} spots open",
+            len(players_sorted),
+            f"{captain['first_name']} {captain['last_name']}" if captain else "",
+            captain.get("email", "") if captain else "",
+            captain.get("phone", "") if captain else ""
+        ]
+        
+        # Add other players
+        for i in range(1, 4):
+            if i < len(players_sorted):
+                p = players_sorted[i]
+                row.append(f"{p['first_name']} {p['last_name']}")
+            else:
+                row.append("")
+        
+        writer.writerow(row)
+    
+    output.seek(0)
+    
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename=ilwu_golf_teams_{datetime.now().strftime('%Y%m%d')}.csv"
+        }
+    )
 
 # Include the router in the main app
 app.include_router(api_router)
