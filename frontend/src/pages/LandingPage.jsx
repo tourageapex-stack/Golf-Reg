@@ -198,7 +198,7 @@ export default function LandingPage() {
             </div>
             <div className="relative">
               <img 
-                src="https://images.pexels.com/photos/9207196/pexels-photo-9207196.jpeg" 
+                src="https://images.pexels.com/photos/11890225/pexels-photo-11890225.jpeg" 
                 alt="Golfers on course" 
                 className="rounded-xl shadow-2xl"
               />
