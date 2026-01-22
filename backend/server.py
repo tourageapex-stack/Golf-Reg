@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, BackgroundTasks
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
@@ -10,6 +10,9 @@ import secrets
 import random
 import csv
 import io
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional
@@ -36,6 +39,11 @@ security = HTTPBasic()
 # Admin credentials (in production, use environment variables)
 ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'ilwu4golf2024')
+
+# Gmail SMTP settings
+GMAIL_USER = os.environ.get('GMAIL_USER', '')
+GMAIL_APP_PASSWORD = os.environ.get('GMAIL_APP_PASSWORD', '')
+EMAIL_ENABLED = bool(GMAIL_USER and GMAIL_APP_PASSWORD)
 
 # Constants
 MAX_TEAMS = 18
@@ -99,6 +107,142 @@ class DashboardStats(BaseModel):
     teams_full: int
     spots_remaining: int
     unassigned_players: int
+
+# Email Functions
+def send_confirmation_email(to_email: str, player_name: str, team_number: int, is_captain: bool, is_team_reg: bool = False, player_count: int = 1):
+    """Send registration confirmation email via Gmail SMTP"""
+    if not EMAIL_ENABLED:
+        logger.warning("Email not configured - skipping confirmation email")
+        return False
+    
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f"ILWU Local 4 Golf Tournament - Registration Confirmed (Team {team_number})"
+        msg['From'] = GMAIL_USER
+        msg['To'] = to_email
+        
+        captain_text = "You are the Team Captain!" if is_captain else ""
+        reg_type = f"Team of {player_count}" if is_team_reg else "Individual"
+        
+        # Plain text version
+        text = f"""
+ILWU Local 4 Golf Tournament
+Registration Confirmation
+
+Hello {player_name},
+
+Your registration has been confirmed!
+
+Registration Details:
+- Type: {reg_type}
+- Team Number: {team_number}
+{f'- Status: Team Captain' if is_captain else ''}
+
+Event Details:
+- Location: Club Green Meadows
+- Date: TBD
+- Price: ${150 if not is_team_reg else (600 if player_count == 4 else player_count * 150)}
+
+PAYMENT INSTRUCTIONS:
+Please complete your payment at:
+• Local 4 Credit Union
+• Or at the Hall
+
+Thank you for registering! See you on the course.
+
+ILWU Local 4
+"""
+        
+        # HTML version
+        html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: 'Inter', Arial, sans-serif; line-height: 1.6; color: #1a365d; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background: linear-gradient(135deg, #1a365d 0%, #0f2342 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+        .header img {{ width: 80px; height: 80px; border-radius: 50%; border: 3px solid #f7dc00; }}
+        .header h1 {{ color: white; margin: 15px 0 5px; font-size: 24px; }}
+        .header h2 {{ color: #f7dc00; margin: 0; font-size: 18px; }}
+        .content {{ background: #f8f9fa; padding: 30px; }}
+        .team-number {{ background: #1a365d; color: #f7dc00; font-size: 48px; font-weight: bold; padding: 20px; border-radius: 10px; text-align: center; margin: 20px 0; }}
+        .team-label {{ color: white; font-size: 14px; text-transform: uppercase; }}
+        .captain-badge {{ background: #f7dc00; color: #1a365d; padding: 8px 16px; border-radius: 20px; display: inline-block; font-weight: bold; font-size: 14px; }}
+        .details {{ background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }}
+        .details h3 {{ margin-top: 0; color: #1a365d; border-bottom: 2px solid #f7dc00; padding-bottom: 10px; }}
+        .payment-box {{ background: #f7dc00; padding: 20px; border-radius: 8px; margin: 20px 0; }}
+        .payment-box h3 {{ color: #1a365d; margin-top: 0; }}
+        .payment-box p {{ color: #1a365d; margin: 0; }}
+        .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://customer-assets.emergentagent.com/job_greenmeadows-golf/artifacts/n4xo0dyh_IMG_1411.png" alt="ILWU Logo">
+            <h1>Registration Confirmed!</h1>
+            <h2>ILWU Local 4 Golf Tournament</h2>
+        </div>
+        <div class="content">
+            <p>Hello <strong>{player_name}</strong>,</p>
+            <p>Your registration has been successfully submitted!</p>
+            
+            <div class="team-number">
+                <div class="team-label">Your Team Number</div>
+                {team_number}
+            </div>
+            
+            {'<p style="text-align:center;"><span class="captain-badge">⭐ You are the Team Captain!</span></p>' if is_captain else ''}
+            
+            <div class="details">
+                <h3>Registration Details</h3>
+                <p><strong>Type:</strong> {reg_type}</p>
+                <p><strong>Team Number:</strong> {team_number}</p>
+                <p><strong>Amount Due:</strong> ${150 if not is_team_reg else (600 if player_count == 4 else player_count * 150)}</p>
+            </div>
+            
+            <div class="details">
+                <h3>Event Details</h3>
+                <p><strong>Location:</strong> Club Green Meadows</p>
+                <p><strong>Date:</strong> TBD (To Be Announced)</p>
+                <p><strong>Format:</strong> 4-Person Teams</p>
+            </div>
+            
+            <div class="payment-box">
+                <h3>💳 Payment Instructions</h3>
+                <p>Please complete your payment at:</p>
+                <p><strong>• Local 4 Credit Union</strong></p>
+                <p><strong>• Or at the Hall</strong></p>
+            </div>
+            
+            <p style="text-align: center; margin-top: 30px;">See you on the course! ⛳</p>
+        </div>
+        <div class="footer">
+            <p>ILWU Local 4 | International Longshore & Warehouse Union</p>
+            <p>Questions? Contact us at the Hall.</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+        
+        part1 = MIMEText(text, 'plain')
+        part2 = MIMEText(html, 'html')
+        msg.attach(part1)
+        msg.attach(part2)
+        
+        # Send via Gmail SMTP
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
+            server.send_message(msg)
+        
+        logger.info(f"Confirmation email sent to {to_email}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to send email to {to_email}: {str(e)}")
+        return False
 
 # Helper functions
 async def get_next_registration_order():
