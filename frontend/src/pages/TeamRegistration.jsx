@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Users, AlertCircle, DollarSign, Plus, Trash2, Crown } from "lucide-react";
+import { ArrowLeft, Users, AlertCircle, DollarSign, Plus, Trash2, Crown, Clock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
@@ -26,7 +26,12 @@ const emptyPlayer = {
 export default function TeamRegistration() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [tournamentInfo, setTournamentInfo] = useState(null);
   const [players, setPlayers] = useState([{ ...emptyPlayer }]);
+
+  useEffect(() => {
+    axios.get(`${API}/tournament-info`).then(res => setTournamentInfo(res.data)).catch(() => {});
+  }, []);
 
   const addPlayer = () => {
     if (players.length < 4) {
@@ -98,7 +103,8 @@ export default function TeamRegistration() {
     }
   };
 
-  const totalPrice = players.length === 4 ? 600 : players.length * 150;
+  const pricePerPlayer = tournamentInfo?.price_per_player || 150;
+  const totalPrice = players.length === 4 ? pricePerPlayer * 4 : players.length * pricePerPlayer;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -308,9 +314,15 @@ export default function TeamRegistration() {
                 <h3 className="font-heading text-2xl font-bold uppercase mb-2">Total Cost</h3>
                 <p className="text-4xl font-bold text-[#f7dc00] mb-2">${totalPrice}</p>
                 <p className="text-white/80 text-sm">
-                  {players.length} player{players.length > 1 ? 's' : ''} × $150
-                  {players.length === 4 && <span className="block text-[#f7dc00]">Full team discount applied!</span>}
+                  {players.length} player{players.length > 1 ? 's' : ''} x ${pricePerPlayer}
+                  {players.length === 4 && tournamentInfo?.is_early_bird && <span className="block text-[#f7dc00]">Full team early bird rate!</span>}
                 </p>
+                {tournamentInfo?.is_early_bird && (
+                  <div className="mt-3 flex items-center gap-2 bg-[#f7dc00]/20 rounded-lg px-3 py-2">
+                    <Clock className="h-4 w-4 text-[#f7dc00]" />
+                    <span className="text-sm text-[#f7dc00] font-semibold">Early bird rate! $150/player starting June 20th</span>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -342,7 +354,7 @@ export default function TeamRegistration() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-[#f7dc00]">•</span>
-                    <span>Full team of 4 = $600 total</span>
+                    <span>Full team of 4 = ${pricePerPlayer * 4} total</span>
                   </li>
                 </ul>
               </CardContent>

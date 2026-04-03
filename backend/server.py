@@ -48,8 +48,24 @@ EMAIL_ENABLED = bool(GMAIL_USER and GMAIL_APP_PASSWORD)
 # Constants
 MAX_TEAMS = 18
 MAX_PLAYERS_PER_TEAM = 4
-PRICE_PER_PLAYER = 150
-PRICE_PER_TEAM = 600
+EARLY_BIRD_PRICE = 125
+REGULAR_PRICE = 150
+EARLY_BIRD_DEADLINE = datetime(2026, 6, 20, tzinfo=timezone.utc)
+EVENT_DATE = "September 3, 2026"
+
+def get_current_price():
+    """Return early bird or regular price based on current date"""
+    now = datetime.now(timezone.utc)
+    if now < EARLY_BIRD_DEADLINE:
+        return EARLY_BIRD_PRICE
+    return REGULAR_PRICE
+
+def get_team_price(player_count):
+    """Calculate team price based on player count and current pricing"""
+    price_per = get_current_price()
+    if player_count == 4:
+        return price_per * 4
+    return price_per * player_count
 
 # Models
 class PlayerBase(BaseModel):
@@ -116,6 +132,11 @@ def send_confirmation_email(to_email: str, player_name: str, team_number: int, i
         return False
     
     try:
+        price_per = get_current_price()
+        is_early_bird = datetime.now(timezone.utc) < EARLY_BIRD_DEADLINE
+        total_cost = get_team_price(player_count) if is_team_reg else price_per
+        pricing_label = "Early Bird" if is_early_bird else "Regular"
+        
         msg = MIMEMultipart('alternative')
         msg['Subject'] = f"ILWU Local 4 Golf Tournament - Registration Confirmed (Team {team_number})"
         msg['From'] = GMAIL_USER
@@ -140,13 +161,13 @@ Registration Details:
 
 Event Details:
 - Location: Club Green Meadows
-- Date: TBD
-- Price: ${150 if not is_team_reg else (600 if player_count == 4 else player_count * 150)}
+- Date: {EVENT_DATE}
+- Price: ${total_cost} ({pricing_label} Rate)
 
 PAYMENT INSTRUCTIONS:
 Please complete your payment at:
-• Local 4 Credit Union
-• Or at the Hall
+- Local 4 Credit Union
+- Or at the Hall
 
 Thank you for registering! See you on the course.
 
@@ -193,30 +214,30 @@ ILWU Local 4
                 {team_number}
             </div>
             
-            {'<p style="text-align:center;"><span class="captain-badge">⭐ You are the Team Captain!</span></p>' if is_captain else ''}
+            {'<p style="text-align:center;"><span class="captain-badge">You are the Team Captain!</span></p>' if is_captain else ''}
             
             <div class="details">
                 <h3>Registration Details</h3>
                 <p><strong>Type:</strong> {reg_type}</p>
                 <p><strong>Team Number:</strong> {team_number}</p>
-                <p><strong>Amount Due:</strong> ${150 if not is_team_reg else (600 if player_count == 4 else player_count * 150)}</p>
+                <p><strong>Amount Due:</strong> ${total_cost} ({pricing_label} Rate)</p>
             </div>
             
             <div class="details">
                 <h3>Event Details</h3>
                 <p><strong>Location:</strong> Club Green Meadows</p>
-                <p><strong>Date:</strong> TBD (To Be Announced)</p>
+                <p><strong>Date:</strong> {EVENT_DATE}</p>
                 <p><strong>Format:</strong> Best Ball Scramble Shotgun start 4-Person Teams</p>
             </div>
             
             <div class="payment-box">
-                <h3>💳 Payment Instructions</h3>
+                <h3>Payment Instructions</h3>
                 <p>Please complete your payment at:</p>
-                <p><strong>• Local 4 Credit Union</strong></p>
-                <p><strong>• Or at the Hall</strong></p>
+                <p><strong>Local 4 Credit Union</strong></p>
+                <p><strong>Or at the Hall</strong></p>
             </div>
             
-            <p style="text-align: center; margin-top: 30px;">See you on the course! ⛳</p>
+            <p style="text-align: center; margin-top: 30px;">See you on the course!</p>
         </div>
         <div class="footer">
             <p>ILWU Local 4 | International Longshore & Warehouse Union</p>
@@ -328,11 +349,18 @@ async def get_tournament_info():
     # Calculate spots
     available_team_spots = MAX_TEAMS - total_teams
     
+    current_price = get_current_price()
+    is_early_bird = datetime.now(timezone.utc) < EARLY_BIRD_DEADLINE
+    
     return {
         "location": "Club Green Meadows",
-        "date": "TBD",
-        "price_per_player": PRICE_PER_PLAYER,
-        "price_per_team": PRICE_PER_TEAM,
+        "date": EVENT_DATE,
+        "price_per_player": current_price,
+        "price_per_team": current_price * 4,
+        "early_bird_price": EARLY_BIRD_PRICE,
+        "regular_price": REGULAR_PRICE,
+        "is_early_bird": is_early_bird,
+        "early_bird_deadline": "June 20, 2026",
         "max_teams": MAX_TEAMS,
         "max_players_per_team": MAX_PLAYERS_PER_TEAM,
         "current_teams": total_teams,

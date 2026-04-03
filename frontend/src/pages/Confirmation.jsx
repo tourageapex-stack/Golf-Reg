@@ -1,21 +1,25 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Trophy, Users, MapPin, DollarSign, ArrowLeft, Home } from "lucide-react";
+import { CheckCircle, Trophy, Users, MapPin, DollarSign, ArrowLeft, Home, Calendar } from "lucide-react";
 
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_greenmeadows-golf/artifacts/n4xo0dyh_IMG_1411.png";
 
 export default function Confirmation() {
   const location = useLocation();
   const navigate = useNavigate();
   const { registration, type, playerName, playerCount, captainName } = location.state || {};
+  const [tournamentInfo, setTournamentInfo] = useState(null);
 
   useEffect(() => {
     // Redirect if no registration data
     if (!registration) {
       navigate("/");
     }
+    axios.get(`${API}/tournament-info`).then(res => setTournamentInfo(res.data)).catch(() => {});
   }, [registration, navigate]);
 
   if (!registration) {
@@ -111,6 +115,14 @@ export default function Confirmation() {
                       <p className="font-semibold text-[#1a365d]">Club Green Meadows</p>
                     </div>
                   </div>
+
+                  <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg">
+                    <Calendar className="h-5 w-5 text-[#1a365d]" />
+                    <div>
+                      <p className="text-sm text-slate-500">Event Date</p>
+                      <p className="font-semibold text-[#1a365d]">September 3, 2026</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -126,7 +138,10 @@ export default function Confirmation() {
                       Please complete your payment at the <strong>Local 4 Credit Union</strong> or at <strong>the Hall</strong>.
                     </p>
                     <p className="text-[#1a365d] mt-2 font-semibold">
-                      Amount Due: ${type === "individual" ? "150" : (playerCount === 4 ? "600" : playerCount * 150)}
+                      Amount Due: ${type === "individual" 
+                        ? (tournamentInfo?.price_per_player || 150) 
+                        : (playerCount * (tournamentInfo?.price_per_player || 150))}
+                      {tournamentInfo?.is_early_bird && <span className="text-sm font-normal ml-1">(Early Bird Rate)</span>}
                     </p>
                   </div>
                 </div>

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MapPin, Calendar, DollarSign, Users, Trophy, Shield } from "lucide-react";
+import { MapPin, Calendar, DollarSign, Users, Trophy, Shield, Target, Star, Award, Zap, Gift, Clock } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -124,8 +124,8 @@ export default function LandingPage() {
             <Card className="p-8 bg-white border-l-4 border-[#f7dc00] shadow-sm hover:shadow-md transition-all duration-300" data-testid="date-card">
               <Calendar className="h-10 w-10 text-[#1a365d] mb-4" />
               <p className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-2">Date</p>
-              <p className="font-heading text-2xl font-bold text-[#1a365d]">TBD</p>
-              <p className="text-slate-600 mt-2">Date to be announced</p>
+              <p className="font-heading text-2xl font-bold text-[#1a365d]">September 3, 2026</p>
+              <p className="text-slate-600 mt-2">Mark your calendar!</p>
             </Card>
             
             {/* Location Card */}
@@ -140,8 +140,14 @@ export default function LandingPage() {
             <Card className="p-8 bg-white border-l-4 border-[#f7dc00] shadow-sm hover:shadow-md transition-all duration-300" data-testid="price-card">
               <DollarSign className="h-10 w-10 text-[#1a365d] mb-4" />
               <p className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-2">Price</p>
-              <p className="font-heading text-2xl font-bold text-[#1a365d]">$150 / Player</p>
-              <p className="text-slate-600 mt-2">$600 per team of 4</p>
+              <p className="font-heading text-2xl font-bold text-[#1a365d]">
+                {tournamentInfo?.is_early_bird ? "$125" : "$150"} / Player
+              </p>
+              <p className="text-slate-600 mt-2">
+                {tournamentInfo?.is_early_bird 
+                  ? "Early bird rate! $150 starting June 20th" 
+                  : "$600 per team of 4"}
+              </p>
             </Card>
             
             {/* Format Card */}
@@ -151,6 +157,131 @@ export default function LandingPage() {
               <p className="font-heading text-2xl font-bold text-[#1a365d]">Best Ball Scramble Shotgun start 4-Person Teams</p>
               <p className="text-slate-600 mt-2">Max 18 teams</p>
             </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Early Bird Pricing Banner */}
+      <section className="py-10 bg-[#1a365d]" data-testid="early-bird-section">
+        <div className="container mx-auto px-6">
+          <div className="bg-gradient-to-r from-[#0f2342] to-[#1a365d] border-2 border-[#f7dc00] rounded-2xl p-8 md:p-10">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-[#f7dc00] rounded-full flex items-center justify-center shrink-0">
+                  <Clock className="h-8 w-8 text-[#1a365d]" />
+                </div>
+                <div>
+                  <h3 className="font-heading text-2xl md:text-3xl font-bold text-white uppercase">Early Bird Special</h3>
+                  <p className="text-white/80 mt-1">Register before June 20th and save!</p>
+                </div>
+              </div>
+              <div className="text-center md:text-right">
+                <div className="flex items-baseline gap-3 justify-center md:justify-end">
+                  <span className="text-5xl font-bold text-[#f7dc00]">$125</span>
+                  <span className="text-white/50 line-through text-2xl">$150</span>
+                </div>
+                <p className="text-white/70 text-sm mt-1">per player before June 20th</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Extras & Prizes Section */}
+      <section className="py-16 md:py-24 bg-white" data-testid="extras-prizes-section">
+        <div className="container mx-auto px-6">
+          <h2 className="font-heading text-3xl md:text-5xl font-bold text-[#1a365d] uppercase text-center mb-4" data-testid="extras-prizes-heading">
+            Extras & Prizes
+          </h2>
+          <p className="text-slate-600 text-center max-w-2xl mx-auto mb-12 text-lg">
+            Compete for prizes and purchase extras to improve your game day experience
+          </p>
+
+          {/* Competitions / Extras to Purchase */}
+          <div className="mb-16">
+            <h3 className="font-heading text-xl md:text-2xl font-bold text-[#1a365d] uppercase text-center mb-8">
+              Available Add-Ons
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              {/* Long Drive */}
+              <Card className="p-6 bg-slate-50 border-0 shadow-md hover:shadow-lg transition-all duration-300 text-center" data-testid="long-drive-card">
+                <div className="w-14 h-14 bg-[#1a365d] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Zap className="h-7 w-7 text-[#f7dc00]" />
+                </div>
+                <h4 className="font-heading text-lg font-bold text-[#1a365d] uppercase mb-2">Long Drive Competition</h4>
+                <p className="text-slate-600 text-sm">Test your power off the tee and compete for the longest drive</p>
+              </Card>
+
+              {/* Closest to Pin */}
+              <Card className="p-6 bg-slate-50 border-0 shadow-md hover:shadow-lg transition-all duration-300 text-center" data-testid="closest-pin-card">
+                <div className="w-14 h-14 bg-[#1a365d] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Target className="h-7 w-7 text-[#f7dc00]" />
+                </div>
+                <h4 className="font-heading text-lg font-bold text-[#1a365d] uppercase mb-2">Closest to the Pin</h4>
+                <p className="text-slate-600 text-sm">Precision counts! Get your ball closest to the pin to win</p>
+              </Card>
+
+              {/* Mulligans */}
+              <Card className="p-6 bg-slate-50 border-0 shadow-md hover:shadow-lg transition-all duration-300 text-center" data-testid="mulligans-card">
+                <div className="w-14 h-14 bg-[#1a365d] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Star className="h-7 w-7 text-[#f7dc00]" />
+                </div>
+                <h4 className="font-heading text-lg font-bold text-[#1a365d] uppercase mb-2">Mulligans</h4>
+                <p className="text-slate-600 text-sm">Purchase mulligans for a second chance on your shot</p>
+              </Card>
+            </div>
+          </div>
+
+          {/* Team Prizes */}
+          <div>
+            <h3 className="font-heading text-xl md:text-2xl font-bold text-[#1a365d] uppercase text-center mb-8">
+              Team Prizes
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+              {/* 1st Place */}
+              <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300" data-testid="prize-1st-card">
+                <div className="bg-gradient-to-br from-[#f7dc00] to-[#d4b800] p-6 text-center">
+                  <Trophy className="h-12 w-12 text-[#1a365d] mx-auto mb-2" />
+                  <h4 className="font-heading text-2xl font-bold text-[#1a365d] uppercase">1st Place</h4>
+                </div>
+                <div className="p-4 bg-white text-center">
+                  <p className="text-slate-600 font-medium">Champions</p>
+                </div>
+              </Card>
+
+              {/* 2nd Place */}
+              <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300" data-testid="prize-2nd-card">
+                <div className="bg-gradient-to-br from-[#c0c0c0] to-[#a8a8a8] p-6 text-center">
+                  <Award className="h-12 w-12 text-[#1a365d] mx-auto mb-2" />
+                  <h4 className="font-heading text-2xl font-bold text-[#1a365d] uppercase">2nd Place</h4>
+                </div>
+                <div className="p-4 bg-white text-center">
+                  <p className="text-slate-600 font-medium">Runners Up</p>
+                </div>
+              </Card>
+
+              {/* 3rd Place */}
+              <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300" data-testid="prize-3rd-card">
+                <div className="bg-gradient-to-br from-[#cd7f32] to-[#b36b2a] p-6 text-center">
+                  <Award className="h-12 w-12 text-white mx-auto mb-2" />
+                  <h4 className="font-heading text-2xl font-bold text-white uppercase">3rd Place</h4>
+                </div>
+                <div className="p-4 bg-white text-center">
+                  <p className="text-slate-600 font-medium">Third Overall</p>
+                </div>
+              </Card>
+
+              {/* Last Place */}
+              <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300" data-testid="prize-last-card">
+                <div className="bg-gradient-to-br from-[#1a365d] to-[#0f2342] p-6 text-center">
+                  <Gift className="h-12 w-12 text-[#f7dc00] mx-auto mb-2" />
+                  <h4 className="font-heading text-2xl font-bold text-white uppercase">Last Place</h4>
+                </div>
+                <div className="p-4 bg-white text-center">
+                  <p className="text-slate-600 font-medium">Better Luck Next Year!</p>
+                </div>
+              </Card>
+            </div>
           </div>
         </div>
       </section>

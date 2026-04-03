@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, User, AlertCircle, DollarSign } from "lucide-react";
+import { ArrowLeft, User, AlertCircle, DollarSign, Clock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -16,6 +16,7 @@ const LOGO_URL = "https://customer-assets.emergentagent.com/job_greenmeadows-gol
 export default function IndividualRegistration() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [tournamentInfo, setTournamentInfo] = useState(null);
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -24,6 +25,10 @@ export default function IndividualRegistration() {
     association: "",
     customAssociation: ""
   });
+
+  useEffect(() => {
+    axios.get(`${API}/tournament-info`).then(res => setTournamentInfo(res.data)).catch(() => {});
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -243,8 +248,14 @@ export default function IndividualRegistration() {
               <CardContent className="p-8 relative">
                 <DollarSign className="h-12 w-12 text-[#f7dc00] mb-4" />
                 <h3 className="font-heading text-2xl font-bold uppercase mb-2">Registration Fee</h3>
-                <p className="text-4xl font-bold text-[#f7dc00] mb-4">$150</p>
+                <p className="text-4xl font-bold text-[#f7dc00] mb-2">${tournamentInfo?.price_per_player || 150}</p>
                 <p className="text-white/80">Per individual player</p>
+                {tournamentInfo?.is_early_bird && (
+                  <div className="mt-3 flex items-center gap-2 bg-[#f7dc00]/20 rounded-lg px-3 py-2">
+                    <Clock className="h-4 w-4 text-[#f7dc00]" />
+                    <span className="text-sm text-[#f7dc00] font-semibold">Early bird rate! $150 starting June 20th</span>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
