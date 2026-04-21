@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import html2pdf from "html2pdf.js";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, Calendar, MapPin, Users, Trophy, DollarSign, Zap, Target, Star, Gift, Clock, Share2 } from "lucide-react";
+import { ArrowLeft, Printer, Calendar, MapPin, Users, Trophy, DollarSign, Zap, Target, Star, Gift, Clock, Share2, FileDown } from "lucide-react";
 import { toast } from "sonner";
 
 const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : "/api";
@@ -11,12 +12,43 @@ const SITE_URL = "https://localfore.vercel.app/";
 
 export default function Flyer() {
   const [info, setInfo] = useState(null);
+  const flyerRef = useRef(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   useEffect(() => {
     axios.get(`${API}/tournament-info`).then((r) => setInfo(r.data)).catch(() => {});
   }, []);
 
+  // Total tournament capacity: 18 teams × 4 players = 72 spots
+  const TOTAL_SPOTS = 72;
+  const spotsRemaining = info ? Math.max(0, TOTAL_SPOTS - (info.current_players || 0)) : null;
+  const spotsFilled = info ? (info.current_players || 0) : 0;
+  const percentFilled = info ? Math.min(100, Math.round((spotsFilled / TOTAL_SPOTS) * 100)) : 0;
+
   const handlePrint = () => window.print();
+
+  const handleDownloadPdf = async () => {
+    if (!flyerRef.current || generatingPdf) return;
+    setGeneratingPdf(true);
+    try {
+      await html2pdf()
+        .set({
+          margin: 0,
+          filename: "ILWU-Golf-Tournament-Flyer.pdf",
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+          jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+        })
+        .from(flyerRef.current)
+        .save();
+      toast.success("PDF downloaded!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not generate PDF. Try printing instead.");
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
 
   const handleShare = async () => {
     const url = SITE_URL;
@@ -57,6 +89,16 @@ export default function Flyer() {
               Share
             </Button>
             <Button
+              onClick={handleDownloadPdf}
+              disabled={generatingPdf}
+              variant="outline"
+              className="border-2 border-[#f7dc00] text-[#f7dc00] hover:bg-[#f7dc00] hover:text-[#1a365d] font-bold uppercase tracking-wide"
+              data-testid="download-pdf-btn"
+            >
+              <FileDown className="h-4 w-4 mr-2" />
+              {generatingPdf ? "Generating…" : "Download PDF"}
+            </Button>
+            <Button
               onClick={handlePrint}
               className="bg-[#f7dc00] text-[#1a365d] hover:bg-[#ffe55c] font-bold uppercase tracking-wide"
               data-testid="print-flyer-btn"
@@ -68,9 +110,45 @@ export default function Flyer() {
         </div>
       </header>
 
+      {/* Live Spots Counter - hidden on print & PDF */}
+      {info && (
+        <section className="max-w-[8.5in] mx-auto px-4 mt-6 print:hidden" data-testid="spots-counter">
+          <div className="relative overflow-hidden rounded-2xl border-2 border-[#f7dc00] bg-gradient-to-br from-[#0f2342] to-[#1a365d] shadow-xl p-5 md:p-6">
+            <div className="absolute -top-8 -right-8 w-32 h-32 bg-[#f7dc00]/10 rounded-full blur-2xl" />
+            <div className="relative flex items-center justify-between gap-6 flex-wrap">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-[#f7dc00] rounded-xl flex items-center justify-center shrink-0 rotate-3 shadow-md">
+                  <Users className="h-7 w-7 text-[#1a365d]" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#f7dc00]">Live Availability</p>
+                  <p className="font-heading text-2xl md:text-3xl font-bold text-white leading-tight">
+                    <span data-testid="spots-remaining">{spotsRemaining}</span>
+                    <span className="text-white/60 text-lg"> / {TOTAL_SPOTS}</span>
+                    <span className="text-white/80 text-lg font-normal ml-2">spots remaining</span>
+                  </p>
+                </div>
+              </div>
+              <div className="flex-1 min-w-[200px] max-w-md">
+                <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-[#f7dc00] to-[#ffe55c] transition-all duration-500"
+                    style={{ width: `${percentFilled}%` }}
+                  />
+                </div>
+                <p className="text-xs text-white/70 mt-2 text-right">
+                  {spotsFilled} of {TOTAL_SPOTS} players registered · {info.current_teams || 0} of 18 teams
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Flyer Page - Letter size (8.5 x 11 in) */}
       <main className="py-8 print:py-0">
         <div
+          ref={flyerRef}
           className="flyer mx-auto bg-white shadow-2xl print:shadow-none relative overflow-hidden"
           data-testid="flyer-page"
         >
