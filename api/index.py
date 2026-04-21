@@ -475,7 +475,9 @@ async def get_dashboard_stats(username: str = Depends(verify_admin)):
     return DashboardStats(
         total_players=total_players, total_teams=total_teams,
         teams_full=teams_full, spots_remaining=spots_remaining,
-        unassigned_players=unassigned
+        unassigned_players=unassigned,
+        paid_players=paid,
+        unpaid_players=total_players - paid
     )
 
 @app.get("/api/admin/teams", response_model=List[TeamWithPlayers])
