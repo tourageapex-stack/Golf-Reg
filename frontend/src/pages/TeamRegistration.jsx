@@ -333,6 +333,19 @@ export default function TeamRegistration() {
               </CardContent>
             </Card>
 
+            {/* Captain Payment Notice */}
+            <Card className="border-2 border-[#f7dc00] bg-[#f7dc00]/10 shadow-lg" data-testid="captain-payment-notice">
+              <CardContent className="p-6 flex items-start gap-4">
+                <div className="w-10 h-10 bg-[#f7dc00] rounded-full flex items-center justify-center shrink-0">
+                  <Crown className="h-5 w-5 text-[#1a365d]" />
+                </div>
+                <div>
+                  <h4 className="font-heading text-base font-bold text-[#1a365d] uppercase mb-1">Team Captain Pays in Full</h4>
+                  <p className="text-slate-700 text-sm">The team captain is responsible for paying the full team registration cost.</p>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Payment Notice */}
             <Alert className="bg-[#f7dc00] border-[#f7dc00]">
               <AlertCircle className="h-5 w-5 text-[#1a365d]" />
