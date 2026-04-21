@@ -155,7 +155,7 @@ export default function LandingPage() {
               <Users className="h-10 w-10 text-[#1a365d] mb-4" />
               <p className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-2">Format</p>
               <p className="font-heading text-2xl font-bold text-[#1a365d]">Best Ball Scramble Shotgun start 4-Person Teams</p>
-              <p className="text-slate-600 mt-2">Max 18 teams</p>
+              <p className="text-slate-600 mt-2">Max 18 teams · Lunch included</p>
             </Card>
           </div>
         </div>
@@ -279,6 +279,18 @@ export default function LandingPage() {
                 </div>
                 <div className="p-4 bg-white text-center">
                   <p className="text-slate-600 font-medium">Better Luck Next Year!</p>
+                </div>
+              </Card>
+
+              {/* Raffle Prizes */}
+              <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 sm:col-span-2 lg:col-span-4" data-testid="prize-raffle-card">
+                <div className="bg-gradient-to-r from-[#f7dc00] to-[#ffe55c] p-6 flex items-center justify-center gap-4">
+                  <Star className="h-10 w-10 text-[#1a365d]" />
+                  <h4 className="font-heading text-2xl font-bold text-[#1a365d] uppercase">Raffle Prizes</h4>
+                  <Star className="h-10 w-10 text-[#1a365d]" />
+                </div>
+                <div className="p-4 bg-white text-center">
+                  <p className="text-slate-600 font-medium">Raffle drawings throughout the event — everyone has a chance to win!</p>
                 </div>
               </Card>
             </div>
