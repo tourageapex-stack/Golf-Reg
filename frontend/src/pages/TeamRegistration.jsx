@@ -314,13 +314,20 @@ export default function TeamRegistration() {
                 <h3 className="font-heading text-2xl font-bold uppercase mb-2">Total Cost</h3>
                 <p className="text-4xl font-bold text-[#f7dc00] mb-2">${totalPrice}</p>
                 <p className="text-white/80 text-sm">
-                  {players.length} player{players.length > 1 ? 's' : ''} x ${pricePerPlayer}
-                  {players.length === 4 && tournamentInfo?.is_early_bird && <span className="block text-[#f7dc00]">Full team early bird rate!</span>}
+                  {players.length} player{players.length > 1 ? 's' : ''} x ${pricePerPlayer}/player
                 </p>
+                {players.length < 4 && (
+                  <p className="text-white/60 text-sm mt-1">
+                    Full team of 4: ${pricePerPlayer * 4}
+                  </p>
+                )}
                 {tournamentInfo?.is_early_bird && (
-                  <div className="mt-3 flex items-center gap-2 bg-[#f7dc00]/20 rounded-lg px-3 py-2">
-                    <Clock className="h-4 w-4 text-[#f7dc00]" />
-                    <span className="text-sm text-[#f7dc00] font-semibold">Early bird rate! $150/player starting June 20th</span>
+                  <div className="mt-3 bg-[#f7dc00]/20 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-[#f7dc00]" />
+                      <span className="text-sm text-[#f7dc00] font-semibold">Early bird rate!</span>
+                    </div>
+                    <p className="text-xs text-white/70 mt-1">$150/player (team of 4: $600) starting June 20th</p>
                   </div>
                 )}
               </CardContent>
