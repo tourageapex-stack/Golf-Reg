@@ -70,6 +70,8 @@ class Player(PlayerBase):
     team_id: Optional[str] = None
     is_captain: bool = False
     registration_order: int = 0
+    payment_status: str = "unpaid"
+    payment_date: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class TeamBase(BaseModel):
@@ -109,6 +111,8 @@ class DashboardStats(BaseModel):
     teams_full: int
     spots_remaining: int
     unassigned_players: int
+    paid_players: int
+    unpaid_players: int
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -467,6 +471,7 @@ async def get_dashboard_stats(username: str = Depends(verify_admin)):
     total_possible_spots = MAX_TEAMS * MAX_PLAYERS_PER_TEAM
     spots_remaining = total_possible_spots - total_players
     unassigned = await db.players.count_documents({"team_id": None})
+    paid = await db.players.count_documents({"payment_status": "paid"})
     return DashboardStats(
         total_players=total_players, total_teams=total_teams,
         teams_full=teams_full, spots_remaining=spots_remaining,
@@ -517,6 +522,45 @@ async def delete_team(team_id: str, username: str = Depends(verify_admin)):
     await db.teams.delete_one({"id": team_id})
     return {"success": True, "message": f"Team {team['team_number']} and all its players deleted"}
 
+@app.put("/api/admin/player/{player_id}/mark-paid")
+async def mark_player_paid(player_id: str, username: str = Depends(verify_admin)):
+    player = await db.players.find_one({"id": player_id}, {"_id": 0})
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    await db.players.update_one(
+        {"id": player_id},
+        {"$set": {"payment_status": "paid", "payment_date": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"success": True, "message": f"{player['first_name']} {player['last_name']} marked as paid"}
+
+@app.put("/api/admin/player/{player_id}/mark-unpaid")
+async def mark_player_unpaid(player_id: str, username: str = Depends(verify_admin)):
+    player = await db.players.find_one({"id": player_id}, {"_id": 0})
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    await db.players.update_one(
+        {"id": player_id},
+        {"$set": {"payment_status": "unpaid", "payment_date": None}}
+    )
+    return {"success": True, "message": f"{player['first_name']} {player['last_name']} marked as unpaid"}
+
+@app.put("/api/admin/team/{team_id}/mark-all-paid")
+async def mark_team_paid(team_id: str, username: str = Depends(verify_admin)):
+    team = await db.teams.find_one({"id": team_id}, {"_id": 0})
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    now = datetime.now(timezone.utc).isoformat()
+    await db.players.update_many(
+        {"team_id": team_id},
+        {"$set": {"payment_status": "paid", "payment_date": now}}
+    )
+    return {"success": True, "message": f"All players on Team {team['team_number']} marked as paid"}
+
+@app.post("/api/webhook/zeffy")
+async def zeffy_webhook(request_data: dict = {}):
+    logging.info(f"Zeffy webhook received: {request_data}")
+    return {"status": "received"}
+
 @app.get("/api/admin/export/csv")
 async def export_registrations_csv(username: str = Depends(verify_admin)):
     players = await db.players.find({}, {"_id": 0}).sort("registration_order", 1).to_list(500)
@@ -549,7 +593,7 @@ async def export_teams_csv(username: str = Depends(verify_admin)):
     teams = await db.teams.find({}, {"_id": 0}).sort("team_number", 1).to_list(100)
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["Team #", "Status", "Players", "Captain", "Captain Email", "Captain Phone", "Player 2", "Player 3", "Player 4"])
+    writer.writerow(["Team #", "Status", "Players", "Captain", "Captain Email", "Captain Phone", "Captain Paid", "Player 2", "P2 Paid", "Player 3", "P3 Paid", "Player 4", "P4 Paid"])
     for team in teams:
         player_ids = team.get("players", [])
         players = await db.players.find({"id": {"$in": player_ids}}, {"_id": 0}).to_list(10)
@@ -561,13 +605,16 @@ async def export_teams_csv(username: str = Depends(verify_admin)):
             len(players_sorted),
             f"{captain['first_name']} {captain['last_name']}" if captain else "",
             captain.get("email", "") if captain else "",
-            captain.get("phone", "") if captain else ""
+            captain.get("phone", "") if captain else "",
+            captain.get("payment_status", "unpaid").capitalize() if captain else ""
         ]
         for i in range(1, 4):
             if i < len(players_sorted):
                 p = players_sorted[i]
                 row.append(f"{p['first_name']} {p['last_name']}")
+                row.append(p.get("payment_status", "unpaid").capitalize())
             else:
+                row.append("")
                 row.append("")
         writer.writerow(row)
     output.seek(0)

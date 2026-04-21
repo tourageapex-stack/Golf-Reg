@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Users, Trophy, LogOut, Trash2, Crown, Home, 
-  RefreshCw, CheckCircle, AlertCircle, Download, FileSpreadsheet
+  RefreshCw, CheckCircle, AlertCircle, Download, FileSpreadsheet,
+  DollarSign, XCircle
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -136,6 +137,31 @@ export default function AdminDashboard() {
     }
   };
 
+  const togglePayment = async (playerId, currentStatus) => {
+    const headers = getAuthHeader();
+    if (!headers) return;
+    const action = currentStatus === "paid" ? "mark-unpaid" : "mark-paid";
+    try {
+      await axios.put(`${API}/admin/player/${playerId}/${action}`, {}, { headers });
+      toast.success(currentStatus === "paid" ? "Marked as unpaid" : "Marked as paid");
+      fetchData();
+    } catch (error) {
+      toast.error("Failed to update payment status");
+    }
+  };
+
+  const markTeamPaid = async (teamId) => {
+    const headers = getAuthHeader();
+    if (!headers) return;
+    try {
+      await axios.put(`${API}/admin/team/${teamId}/mark-all-paid`, {}, { headers });
+      toast.success("All team members marked as paid");
+      fetchData();
+    } catch (error) {
+      toast.error("Failed to update payment status");
+    }
+  };
+
   if (loading && !stats) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -182,7 +208,7 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8">
         {/* Stats Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <Card className="border-l-4 border-[#1a365d]" data-testid="stat-total-players">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -207,26 +233,26 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-[#2d5a27]" data-testid="stat-full-teams">
+          <Card className="border-l-4 border-[#2d5a27]" data-testid="stat-paid-players">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Full Teams</p>
-                  <p className="text-3xl font-bold text-[#1a365d]">{stats?.teams_full || 0}</p>
+                  <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Paid</p>
+                  <p className="text-3xl font-bold text-[#2d5a27]">{stats?.paid_players || 0}</p>
                 </div>
-                <CheckCircle className="h-10 w-10 text-[#2d5a27]/30" />
+                <DollarSign className="h-10 w-10 text-[#2d5a27]/30" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-orange-500" data-testid="stat-spots-remaining">
+          <Card className="border-l-4 border-red-500" data-testid="stat-unpaid-players">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Spots Left</p>
-                  <p className="text-3xl font-bold text-[#1a365d]">{stats?.spots_remaining || 0}</p>
+                  <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Unpaid</p>
+                  <p className="text-3xl font-bold text-red-500">{stats?.unpaid_players || 0}</p>
                 </div>
-                <AlertCircle className="h-10 w-10 text-orange-500/30" />
+                <XCircle className="h-10 w-10 text-red-500/30" />
               </div>
             </CardContent>
           </Card>
@@ -306,6 +332,16 @@ export default function AdminDashboard() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => markTeamPaid(team.id)}
+                            className="text-[#f7dc00] hover:text-white hover:bg-white/10 h-8 px-2 text-xs"
+                            data-testid={`mark-team-${team.team_number}-paid-btn`}
+                          >
+                            <DollarSign className="h-3 w-3 mr-1" />
+                            All Paid
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => setDeleteDialog({ 
                               open: true, 
                               type: "team", 
@@ -341,6 +377,17 @@ export default function AdminDashboard() {
                                 {player.is_captain && (
                                   <Crown className="h-4 w-4 text-[#f7dc00]" />
                                 )}
+                                <button 
+                                  onClick={() => togglePayment(player.id, player.payment_status || "unpaid")}
+                                  className={`text-xs px-2 py-0.5 rounded-full cursor-pointer font-semibold ${
+                                    player.payment_status === "paid" 
+                                      ? "bg-[#2d5a27] text-white" 
+                                      : "bg-red-100 text-red-700"
+                                  }`}
+                                  data-testid={`toggle-payment-${player.id}`}
+                                >
+                                  {player.payment_status === "paid" ? "Paid" : "Unpaid"}
+                                </button>
                               </div>
                               <Button
                                 variant="ghost"
@@ -380,14 +427,15 @@ export default function AdminDashboard() {
                       <TableHead className="font-bold">Phone</TableHead>
                       <TableHead className="font-bold">Association</TableHead>
                       <TableHead className="font-bold">Team</TableHead>
-                      <TableHead className="font-bold">Status</TableHead>
+                      <TableHead className="font-bold">Role</TableHead>
+                      <TableHead className="font-bold">Payment</TableHead>
                       <TableHead className="font-bold w-16">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {players.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8 text-slate-500">
+                        <TableCell colSpan={9} className="text-center py-8 text-slate-500">
                           No players registered yet.
                         </TableCell>
                       </TableRow>
@@ -413,6 +461,19 @@ export default function AdminDashboard() {
                                 Captain
                               </Badge>
                             )}
+                          </TableCell>
+                          <TableCell>
+                            <button
+                              onClick={() => togglePayment(player.id, player.payment_status || "unpaid")}
+                              className={`text-xs px-3 py-1 rounded-full cursor-pointer font-semibold transition-colors ${
+                                player.payment_status === "paid"
+                                  ? "bg-[#2d5a27] text-white hover:bg-[#2d5a27]/80"
+                                  : "bg-red-100 text-red-700 hover:bg-red-200"
+                              }`}
+                              data-testid={`toggle-payment-table-${player.id}`}
+                            >
+                              {player.payment_status === "paid" ? "Paid" : "Unpaid"}
+                            </button>
                           </TableCell>
                           <TableCell>
                             <Button

@@ -82,6 +82,8 @@ class Player(PlayerBase):
     team_id: Optional[str] = None
     is_captain: bool = False
     registration_order: int = 0
+    payment_status: str = "unpaid"
+    payment_date: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class TeamBase(BaseModel):
@@ -121,6 +123,8 @@ class DashboardStats(BaseModel):
     teams_full: int
     spots_remaining: int
     unassigned_players: int
+    paid_players: int
+    unpaid_players: int
 
 # Email Functions
 def send_confirmation_email(to_email: str, player_name: str, team_number: int, is_captain: bool, is_team_reg: bool = False, player_count: int = 1):
@@ -586,13 +590,16 @@ async def get_dashboard_stats(username: str = Depends(verify_admin)):
     
     # Unassigned players (shouldn't happen in normal flow, but just in case)
     unassigned = await db.players.count_documents({"team_id": None})
+    paid = await db.players.count_documents({"payment_status": "paid"})
     
     return DashboardStats(
         total_players=total_players,
         total_teams=total_teams,
         teams_full=teams_full,
         spots_remaining=spots_remaining,
-        unassigned_players=unassigned
+        unassigned_players=unassigned,
+        paid_players=paid,
+        unpaid_players=total_players - paid
     )
 
 @api_router.get("/admin/teams", response_model=List[TeamWithPlayers])
@@ -672,6 +679,49 @@ async def delete_team(team_id: str, username: str = Depends(verify_admin)):
     
     return {"success": True, "message": f"Team {team['team_number']} and all its players deleted"}
 
+@api_router.put("/admin/player/{player_id}/mark-paid")
+async def mark_player_paid(player_id: str, username: str = Depends(verify_admin)):
+    """Mark a player as paid"""
+    player = await db.players.find_one({"id": player_id}, {"_id": 0})
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    await db.players.update_one(
+        {"id": player_id},
+        {"$set": {"payment_status": "paid", "payment_date": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"success": True, "message": f"{player['first_name']} {player['last_name']} marked as paid"}
+
+@api_router.put("/admin/player/{player_id}/mark-unpaid")
+async def mark_player_unpaid(player_id: str, username: str = Depends(verify_admin)):
+    """Mark a player as unpaid"""
+    player = await db.players.find_one({"id": player_id}, {"_id": 0})
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    await db.players.update_one(
+        {"id": player_id},
+        {"$set": {"payment_status": "unpaid", "payment_date": None}}
+    )
+    return {"success": True, "message": f"{player['first_name']} {player['last_name']} marked as unpaid"}
+
+@api_router.put("/admin/team/{team_id}/mark-all-paid")
+async def mark_team_paid(team_id: str, username: str = Depends(verify_admin)):
+    """Mark all players on a team as paid"""
+    team = await db.teams.find_one({"id": team_id}, {"_id": 0})
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    now = datetime.now(timezone.utc).isoformat()
+    await db.players.update_many(
+        {"team_id": team_id},
+        {"$set": {"payment_status": "paid", "payment_date": now}}
+    )
+    return {"success": True, "message": f"All players on Team {team['team_number']} marked as paid"}
+
+@api_router.post("/webhook/zeffy")
+async def zeffy_webhook(request_data: dict = {}):
+    """Webhook endpoint for Zeffy payment notifications (to be configured later)"""
+    logger.info(f"Zeffy webhook received: {request_data}")
+    return {"status": "received"}
+
 @api_router.get("/admin/export/csv")
 async def export_registrations_csv(username: str = Depends(verify_admin)):
     """Export all registrations to CSV"""
@@ -699,6 +749,8 @@ async def export_registrations_csv(username: str = Depends(verify_admin)):
         "Email",
         "Phone",
         "Association",
+        "Payment Status",
+        "Payment Date",
         "Registered At"
     ])
     
@@ -713,6 +765,8 @@ async def export_registrations_csv(username: str = Depends(verify_admin)):
             player.get("email", ""),
             player.get("phone", ""),
             player.get("association", ""),
+            player.get("payment_status", "unpaid").capitalize(),
+            player.get("payment_date", "")[:10] if player.get("payment_date") else "",
             player.get("created_at", "")[:10] if player.get("created_at") else ""
         ])
     
@@ -743,9 +797,13 @@ async def export_teams_csv(username: str = Depends(verify_admin)):
         "Captain",
         "Captain Email",
         "Captain Phone",
+        "Captain Paid",
         "Player 2",
-        "Player 3", 
-        "Player 4"
+        "P2 Paid",
+        "Player 3",
+        "P3 Paid",
+        "Player 4",
+        "P4 Paid"
     ])
     
     for team in teams:
@@ -761,7 +819,8 @@ async def export_teams_csv(username: str = Depends(verify_admin)):
             len(players_sorted),
             f"{captain['first_name']} {captain['last_name']}" if captain else "",
             captain.get("email", "") if captain else "",
-            captain.get("phone", "") if captain else ""
+            captain.get("phone", "") if captain else "",
+            captain.get("payment_status", "unpaid").capitalize() if captain else ""
         ]
         
         # Add other players
@@ -769,7 +828,9 @@ async def export_teams_csv(username: str = Depends(verify_admin)):
             if i < len(players_sorted):
                 p = players_sorted[i]
                 row.append(f"{p['first_name']} {p['last_name']}")
+                row.append(p.get("payment_status", "unpaid").capitalize())
             else:
+                row.append("")
                 row.append("")
         
         writer.writerow(row)
