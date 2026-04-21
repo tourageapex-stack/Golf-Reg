@@ -49,7 +49,7 @@ Build a website for registration of a golf tournament for ILWU Local 4. Location
 - **Max teams raised from 18 → 25**
 - Smart team-number + starting-hole assignment:
   - Teams 1-18: random team number 1-18, starting hole = team number (one team per hole for shotgun start)
-  - Teams 19-25: random team number 19-25, starting hole random 1-6 (second team on that hole)
+  - Teams 19-25: random team number 19-25, starting hole random 1-7 (second team on that hole)
 - `starting_hole` now returned in registration response, team list, admin dashboard (Hole X badge), confirmation page (hole pill), and confirmation emails (text + HTML)
 - Applied to both `/app/backend/server.py` and `/app/api/index.py`
 
