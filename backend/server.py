@@ -1,5 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, BackgroundTasks
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, BackgroundTasks, Header
 from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -35,10 +34,7 @@ app = FastAPI()
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
-# Security for admin
-security = HTTPBasic()
-
-# Admin credentials (in production, use environment variables)
+# Admin credentials
 ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'ilwu4golf2024')
 
@@ -315,17 +311,22 @@ async def find_or_create_team_for_individual():
     await db.teams.insert_one(team_dict)
     return team_dict
 
-async def verify_admin(credentials: HTTPBasicCredentials = Depends(security)):
-    """Verify admin credentials"""
-    correct_username = secrets.compare_digest(credentials.username, ADMIN_USERNAME)
-    correct_password = secrets.compare_digest(credentials.password, ADMIN_PASSWORD)
+async def verify_admin(authorization: str = Header(None)):
+    """Verify admin credentials from Authorization header"""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        import base64
+        scheme, token = authorization.split(" ", 1)
+        decoded = base64.b64decode(token).decode()
+        username, password = decoded.split(":", 1)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    correct_username = secrets.compare_digest(username, ADMIN_USERNAME)
+    correct_password = secrets.compare_digest(password, ADMIN_PASSWORD)
     if not (correct_username and correct_password):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid credentials",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-    return credentials.username
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return username
 
 # Routes
 @api_router.get("/")
@@ -552,6 +553,21 @@ async def get_all_teams():
     return result
 
 # Admin routes
+class AdminLogin(BaseModel):
+    username: str
+    password: str
+
+@api_router.post("/admin/login")
+async def admin_login(data: AdminLogin):
+    """Admin login - returns token for subsequent requests"""
+    import base64
+    correct_username = secrets.compare_digest(data.username, ADMIN_USERNAME)
+    correct_password = secrets.compare_digest(data.password, ADMIN_PASSWORD)
+    if not (correct_username and correct_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = base64.b64encode(f"{data.username}:{data.password}".encode()).decode()
+    return {"success": True, "token": token, "username": data.username}
+
 @api_router.get("/admin/verify")
 async def verify_admin_access(username: str = Depends(verify_admin)):
     """Verify admin credentials"""

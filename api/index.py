@@ -1,5 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, BackgroundTasks
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, BackgroundTasks, Header
 from fastapi.responses import StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -26,9 +25,6 @@ db = client[db_name]
 
 # Create the main app
 app = FastAPI()
-
-# Security for admin
-security = HTTPBasic()
 
 # Admin credentials
 ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
@@ -269,17 +265,40 @@ async def find_or_create_team_for_individual():
     await db.teams.insert_one(team_dict)
     return team_dict
 
-async def verify_admin(credentials: HTTPBasicCredentials = Depends(security)):
-    correct_username = secrets.compare_digest(credentials.username, ADMIN_USERNAME)
-    correct_password = secrets.compare_digest(credentials.password, ADMIN_PASSWORD)
+async def verify_admin(authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        import base64
+        scheme, token = authorization.split(" ", 1)
+        decoded = base64.b64decode(token).decode()
+        username, password = decoded.split(":", 1)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    correct_username = secrets.compare_digest(username, ADMIN_USERNAME)
+    correct_password = secrets.compare_digest(password, ADMIN_PASSWORD)
     if not (correct_username and correct_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials", headers={"WWW-Authenticate": "Basic"})
-    return credentials.username
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return username
 
 # Routes
 @app.get("/api")
 async def root():
     return {"message": "ILWU Local 4 Golf Tournament API"}
+
+class AdminLoginRequest(BaseModel):
+    username: str
+    password: str
+
+@app.post("/api/admin/login")
+async def admin_login(data: AdminLoginRequest):
+    import base64
+    correct_username = secrets.compare_digest(data.username, ADMIN_USERNAME)
+    correct_password = secrets.compare_digest(data.password, ADMIN_PASSWORD)
+    if not (correct_username and correct_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = base64.b64encode(f"{data.username}:{data.password}".encode()).decode()
+    return {"success": True, "token": token, "username": data.username}
 
 @app.get("/api/email-status")
 async def get_email_status():

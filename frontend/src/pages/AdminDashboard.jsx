@@ -45,7 +45,7 @@ export default function AdminDashboard() {
       navigate("/admin");
       return null;
     }
-    return { Authorization: `Basic ${auth}` };
+    return { Authorization: `Bearer ${auth}` };
   }, [navigate]);
 
   const fetchData = useCallback(async () => {
@@ -92,7 +92,7 @@ export default function AdminDashboard() {
     try {
       const endpoint = type === "players" ? "export/csv" : "export/teams-csv";
       const response = await fetch(`${API}/admin/${endpoint}`, {
-        headers: { Authorization: `Basic ${auth}` }
+        headers: { Authorization: `Bearer ${auth}` }
       });
       
       if (!response.ok) throw new Error("Export failed");

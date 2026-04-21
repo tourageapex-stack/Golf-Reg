@@ -35,16 +35,14 @@ export default function AdminLogin() {
     setLoading(true);
     
     try {
-      // Test credentials with admin verify endpoint
-      await axios.get(`${API}/admin/verify`, {
-        auth: {
-          username: credentials.username,
-          password: credentials.password
-        }
+      // Login with JSON credentials
+      const res = await axios.post(`${API}/admin/login`, {
+        username: credentials.username,
+        password: credentials.password
       });
       
-      // Store credentials in sessionStorage for subsequent requests
-      sessionStorage.setItem("adminAuth", btoa(`${credentials.username}:${credentials.password}`));
+      // Store token in sessionStorage for subsequent requests
+      sessionStorage.setItem("adminAuth", res.data.token);
       
       toast.success("Login successful!");
       navigate("/admin/dashboard");
