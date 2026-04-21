@@ -42,6 +42,7 @@ EARLY_BIRD_PRICE = 125
 REGULAR_PRICE = 150
 EARLY_BIRD_DEADLINE = datetime(2026, 6, 20, tzinfo=timezone.utc)
 EVENT_DATE = "September 3, 2026"
+EVENT_SCHEDULE = "Registration opens 7:00 AM · Shotgun tee off 8:00 AM"
 
 def get_current_price():
     now = datetime.now(timezone.utc)
@@ -153,6 +154,7 @@ Registration Details:
 Event Details:
 - Location: Club Green Meadows
 - Date: {EVENT_DATE}
+- Schedule: {EVENT_SCHEDULE}
 - Price: ${total_cost} ({pricing_label} Rate)
 
 PAYMENT INSTRUCTIONS:
@@ -208,6 +210,7 @@ ILWU Local 4
                 <h3>Event Details</h3>
                 <p><strong>Location:</strong> Club Green Meadows</p>
                 <p><strong>Date:</strong> {EVENT_DATE}</p>
+                <p><strong>Schedule:</strong> {EVENT_SCHEDULE}</p>
                 <p><strong>Format:</strong> Best Ball Scramble Shotgun start 4-Person Teams</p>
             </div>
             <div class="payment-box">
@@ -246,7 +249,7 @@ def send_payment_confirmation_email(to_email, player_name, team_number):
         msg['Subject'] = f"ILWU Local 4 Golf Tournament - Payment Received (Team {team_number})"
         msg['From'] = GMAIL_USER
         msg['To'] = to_email
-        text = f"Hello {player_name},\n\nYour payment has been received! You're all set for the tournament.\n\nTeam: {team_number}\nDate: {EVENT_DATE}\nLocation: Club Green Meadows\n\nSee you on the course!\nILWU Local 4"
+        text = f"Hello {player_name},\n\nYour payment has been received! You're all set for the tournament.\n\nTeam: {team_number}\nDate: {EVENT_DATE}\nSchedule: {EVENT_SCHEDULE}\nLocation: Club Green Meadows\n\nSee you on the course!\nILWU Local 4"
         html = f"""
 <!DOCTYPE html>
 <html><head><style>
@@ -267,7 +270,8 @@ body {{ font-family: Arial, sans-serif; color: #1a365d; }}
 <div class="details"><h3>Your Details</h3>
 <p><strong>Team Number:</strong> {team_number}</p>
 <p><strong>Location:</strong> Club Green Meadows</p>
-<p><strong>Date:</strong> {EVENT_DATE}</p></div>
+<p><strong>Date:</strong> {EVENT_DATE}</p>
+<p><strong>Schedule:</strong> {EVENT_SCHEDULE}</p></div>
 <p style="text-align:center">See you on the course!</p>
 </div><div class="footer"><p>ILWU Local 4</p></div></div></body></html>"""
         msg.attach(MIMEText(text, 'plain'))
@@ -369,6 +373,7 @@ async def get_tournament_info():
     return {
         "location": "Club Green Meadows",
         "date": EVENT_DATE,
+        "schedule": EVENT_SCHEDULE,
         "price_per_player": current_price,
         "price_per_team": current_price * 4,
         "early_bird_price": EARLY_BIRD_PRICE,

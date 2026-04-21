@@ -121,6 +121,7 @@ export default function Confirmation() {
                     <div>
                       <p className="text-sm text-slate-500">Event Date</p>
                       <p className="font-semibold text-[#1a365d]">September 3, 2026</p>
+                      <p className="text-sm text-slate-600 mt-1">Registration opens 7:00 AM · Shotgun tee off 8:00 AM</p>
                     </div>
                   </div>
                 </div>

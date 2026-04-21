@@ -50,6 +50,7 @@ EARLY_BIRD_PRICE = 125
 REGULAR_PRICE = 150
 EARLY_BIRD_DEADLINE = datetime(2026, 6, 20, tzinfo=timezone.utc)
 EVENT_DATE = "September 3, 2026"
+EVENT_SCHEDULE = "Registration opens 7:00 AM · Shotgun tee off 8:00 AM"
 
 def get_current_price():
     """Return early bird or regular price based on current date"""
@@ -192,6 +193,7 @@ Registration Details:
 Event Details:
 - Location: Club Green Meadows
 - Date: {EVENT_DATE}
+- Schedule: {EVENT_SCHEDULE}
 - Price: ${total_cost} ({pricing_label} Rate)
 
 PAYMENT INSTRUCTIONS:
@@ -257,6 +259,7 @@ ILWU Local 4
                 <h3>Event Details</h3>
                 <p><strong>Location:</strong> Club Green Meadows</p>
                 <p><strong>Date:</strong> {EVENT_DATE}</p>
+                <p><strong>Schedule:</strong> {EVENT_SCHEDULE}</p>
                 <p><strong>Format:</strong> Best Ball Scramble Shotgun start 4-Person Teams</p>
             </div>
             
@@ -315,6 +318,7 @@ Your payment has been received! You are all set for the tournament.
 Event Details:
 - Location: Club Green Meadows
 - Date: {EVENT_DATE}
+- Schedule: {EVENT_SCHEDULE}
 - Team Number: {team_number}
 
 See you on the course!
@@ -351,6 +355,7 @@ ILWU Local 4
                 <p><strong>Team Number:</strong> {team_number}</p>
                 <p><strong>Location:</strong> Club Green Meadows</p>
                 <p><strong>Date:</strong> {EVENT_DATE}</p>
+                <p><strong>Schedule:</strong> {EVENT_SCHEDULE}</p>
             </div>
             <p style="text-align: center; margin-top: 30px;">See you on the course!</p>
         </div>
@@ -469,6 +474,7 @@ async def get_tournament_info():
     return {
         "location": "Club Green Meadows",
         "date": EVENT_DATE,
+        "schedule": EVENT_SCHEDULE,
         "price_per_player": current_price,
         "price_per_team": current_price * 4,
         "early_bird_price": EARLY_BIRD_PRICE,

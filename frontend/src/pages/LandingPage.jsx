@@ -132,9 +132,10 @@ export default function LandingPage() {
             {/* Date Card */}
             <Card className="p-8 bg-white border-l-4 border-[#f7dc00] shadow-sm hover:shadow-md transition-all duration-300" data-testid="date-card">
               <Calendar className="h-10 w-10 text-[#1a365d] mb-4" />
-              <p className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-2">Date</p>
+              <p className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-2">Date & Schedule</p>
               <p className="font-heading text-2xl font-bold text-[#1a365d]">September 3, 2026</p>
-              <p className="text-slate-600 mt-2">Mark your calendar!</p>
+              <p className="text-slate-600 mt-2">Registration opens at 7:00 AM</p>
+              <p className="text-slate-600">Shotgun tee off at 8:00 AM</p>
             </Card>
             
             {/* Location Card */}
