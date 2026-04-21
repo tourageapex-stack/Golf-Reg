@@ -579,21 +579,34 @@ async def mark_player_paid(player_id: str, background_tasks: BackgroundTasks, us
     player = await db.players.find_one({"id": player_id}, {"_id": 0})
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
-    await db.players.update_one(
-        {"id": player_id},
-        {"$set": {"payment_status": "paid", "payment_date": datetime.now(timezone.utc).isoformat()}}
-    )
-    # Send payment confirmation email
-    if player.get("team_id"):
+    now = datetime.now(timezone.utc).isoformat()
+    if player.get("is_captain") and player.get("team_id"):
         team = await db.teams.find_one({"id": player["team_id"]}, {"_id": 0})
         team_num = team["team_number"] if team else 0
-        background_tasks.add_task(
-            send_payment_confirmation_email,
-            player["email"],
-            f"{player['first_name']} {player['last_name']}",
-            team_num
+        teammates = await db.players.find({"team_id": player["team_id"]}, {"_id": 0}).to_list(10)
+        await db.players.update_many(
+            {"team_id": player["team_id"]},
+            {"$set": {"payment_status": "paid", "payment_date": now}}
         )
-    return {"success": True, "message": f"{player['first_name']} {player['last_name']} marked as paid"}
+        for p in teammates:
+            background_tasks.add_task(
+                send_payment_confirmation_email, p["email"],
+                f"{p['first_name']} {p['last_name']}", team_num
+            )
+        return {"success": True, "message": f"Captain {player['first_name']} {player['last_name']} paid in full — all {len(teammates)} team members marked as paid"}
+    else:
+        await db.players.update_one(
+            {"id": player_id},
+            {"$set": {"payment_status": "paid", "payment_date": now}}
+        )
+        if player.get("team_id"):
+            team = await db.teams.find_one({"id": player["team_id"]}, {"_id": 0})
+            team_num = team["team_number"] if team else 0
+            background_tasks.add_task(
+                send_payment_confirmation_email, player["email"],
+                f"{player['first_name']} {player['last_name']}", team_num
+            )
+        return {"success": True, "message": f"{player['first_name']} {player['last_name']} marked as paid"}
 
 @app.put("/api/admin/player/{player_id}/mark-unpaid")
 async def mark_player_unpaid(player_id: str, username: str = Depends(verify_admin)):
