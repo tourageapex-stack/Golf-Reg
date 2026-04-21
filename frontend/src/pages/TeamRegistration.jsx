@@ -11,7 +11,7 @@ import { ArrowLeft, Users, AlertCircle, DollarSign, Plus, Trash2, Crown, Clock }
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : '/api';
 const LOGO_URL = "/images/ilwu_logo.png";
 
 const emptyPlayer = {
