@@ -72,6 +72,8 @@ class Player(PlayerBase):
     registration_order: int = 0
     payment_status: str = "unpaid"
     payment_date: Optional[str] = None
+    checked_in: bool = False
+    checkin_time: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class TeamBase(BaseModel):
@@ -82,6 +84,7 @@ class Team(TeamBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     players: List[str] = []
     is_full: bool = False
+    score: Optional[int] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class TeamRegistration(BaseModel):
@@ -103,6 +106,7 @@ class TeamWithPlayers(BaseModel):
     players: List[Player]
     is_full: bool
     spots_remaining: int
+    score: Optional[int] = None
     created_at: str
 
 class DashboardStats(BaseModel):
@@ -113,6 +117,7 @@ class DashboardStats(BaseModel):
     unassigned_players: int
     paid_players: int
     unpaid_players: int
+    checked_in_players: int
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -231,6 +236,48 @@ ILWU Local 4
         return True
     except Exception as e:
         logger.error(f"Failed to send email to {to_email}: {str(e)}")
+        return False
+
+def send_payment_confirmation_email(to_email, player_name, team_number):
+    if not EMAIL_ENABLED:
+        return False
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f"ILWU Local 4 Golf Tournament - Payment Received (Team {team_number})"
+        msg['From'] = GMAIL_USER
+        msg['To'] = to_email
+        text = f"Hello {player_name},\n\nYour payment has been received! You're all set for the tournament.\n\nTeam: {team_number}\nDate: {EVENT_DATE}\nLocation: Club Green Meadows\n\nSee you on the course!\nILWU Local 4"
+        html = f"""
+<!DOCTYPE html>
+<html><head><style>
+body {{ font-family: Arial, sans-serif; color: #1a365d; }}
+.container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+.header {{ background: linear-gradient(135deg, #2d5a27, #1a4020); padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+.header h1 {{ color: white; font-size: 24px; margin: 0 0 5px; }}
+.header h2 {{ color: #f7dc00; font-size: 18px; margin: 0; }}
+.content {{ background: #f8f9fa; padding: 30px; }}
+.details {{ background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }}
+.details h3 {{ margin-top: 0; color: #1a365d; border-bottom: 2px solid #2d5a27; padding-bottom: 10px; }}
+.footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+</style></head><body><div class="container">
+<div class="header"><h1>Payment Received!</h1><h2>ILWU Local 4 Golf Tournament</h2></div>
+<div class="content">
+<p>Hello <strong>{player_name}</strong>,</p>
+<p>Your payment has been confirmed. You're all set!</p>
+<div class="details"><h3>Your Details</h3>
+<p><strong>Team Number:</strong> {team_number}</p>
+<p><strong>Location:</strong> Club Green Meadows</p>
+<p><strong>Date:</strong> {EVENT_DATE}</p></div>
+<p style="text-align:center">See you on the course!</p>
+</div><div class="footer"><p>ILWU Local 4</p></div></div></body></html>"""
+        msg.attach(MIMEText(text, 'plain'))
+        msg.attach(MIMEText(html, 'html'))
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
+            server.send_message(msg)
+        return True
+    except Exception as e:
+        logging.error(f"Failed to send payment email: {e}")
         return False
 
 # Helper functions
@@ -455,6 +502,7 @@ async def get_all_teams():
             players=[Player(**p) for p in players_sorted],
             is_full=team.get("is_full", False),
             spots_remaining=MAX_PLAYERS_PER_TEAM - len(player_ids),
+            score=team.get("score"),
             created_at=team.get("created_at", "")
         ))
     return result
@@ -472,12 +520,14 @@ async def get_dashboard_stats(username: str = Depends(verify_admin)):
     spots_remaining = total_possible_spots - total_players
     unassigned = await db.players.count_documents({"team_id": None})
     paid = await db.players.count_documents({"payment_status": "paid"})
+    checked_in = await db.players.count_documents({"checked_in": True})
     return DashboardStats(
         total_players=total_players, total_teams=total_teams,
         teams_full=teams_full, spots_remaining=spots_remaining,
         unassigned_players=unassigned,
         paid_players=paid,
-        unpaid_players=total_players - paid
+        unpaid_players=total_players - paid,
+        checked_in_players=checked_in
     )
 
 @app.get("/api/admin/teams", response_model=List[TeamWithPlayers])
@@ -525,7 +575,7 @@ async def delete_team(team_id: str, username: str = Depends(verify_admin)):
     return {"success": True, "message": f"Team {team['team_number']} and all its players deleted"}
 
 @app.put("/api/admin/player/{player_id}/mark-paid")
-async def mark_player_paid(player_id: str, username: str = Depends(verify_admin)):
+async def mark_player_paid(player_id: str, background_tasks: BackgroundTasks, username: str = Depends(verify_admin)):
     player = await db.players.find_one({"id": player_id}, {"_id": 0})
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
@@ -533,6 +583,16 @@ async def mark_player_paid(player_id: str, username: str = Depends(verify_admin)
         {"id": player_id},
         {"$set": {"payment_status": "paid", "payment_date": datetime.now(timezone.utc).isoformat()}}
     )
+    # Send payment confirmation email
+    if player.get("team_id"):
+        team = await db.teams.find_one({"id": player["team_id"]}, {"_id": 0})
+        team_num = team["team_number"] if team else 0
+        background_tasks.add_task(
+            send_payment_confirmation_email,
+            player["email"],
+            f"{player['first_name']} {player['last_name']}",
+            team_num
+        )
     return {"success": True, "message": f"{player['first_name']} {player['last_name']} marked as paid"}
 
 @app.put("/api/admin/player/{player_id}/mark-unpaid")
@@ -562,6 +622,58 @@ async def mark_team_paid(team_id: str, username: str = Depends(verify_admin)):
 async def zeffy_webhook(request_data: dict = {}):
     logging.info(f"Zeffy webhook received: {request_data}")
     return {"status": "received"}
+
+@app.put("/api/admin/player/{player_id}/check-in")
+async def check_in_player(player_id: str, username: str = Depends(verify_admin)):
+    player = await db.players.find_one({"id": player_id}, {"_id": 0})
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    await db.players.update_one(
+        {"id": player_id},
+        {"$set": {"checked_in": True, "checkin_time": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"success": True, "message": f"{player['first_name']} {player['last_name']} checked in"}
+
+@app.put("/api/admin/player/{player_id}/undo-check-in")
+async def undo_check_in_player(player_id: str, username: str = Depends(verify_admin)):
+    player = await db.players.find_one({"id": player_id}, {"_id": 0})
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    await db.players.update_one(
+        {"id": player_id},
+        {"$set": {"checked_in": False, "checkin_time": None}}
+    )
+    return {"success": True, "message": f"{player['first_name']} {player['last_name']} check-in undone"}
+
+class TeamScore(BaseModel):
+    score: int
+
+@app.put("/api/admin/team/{team_id}/score")
+async def set_team_score(team_id: str, data: TeamScore, username: str = Depends(verify_admin)):
+    team = await db.teams.find_one({"id": team_id}, {"_id": 0})
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    await db.teams.update_one({"id": team_id}, {"$set": {"score": data.score}})
+    return {"success": True, "message": f"Team {team['team_number']} score set to {data.score}"}
+
+@app.get("/api/leaderboard")
+async def get_leaderboard():
+    teams = await db.teams.find({}, {"_id": 0}).to_list(100)
+    result = []
+    for team in teams:
+        player_ids = team.get("players", [])
+        players = await db.players.find({"id": {"$in": player_ids}}, {"_id": 0, "email": 0, "phone": 0}).to_list(10)
+        captain = next((p for p in players if p.get("is_captain")), None)
+        result.append({
+            "team_number": team["team_number"],
+            "score": team.get("score"),
+            "captain_name": f"{captain['first_name']} {captain['last_name']}" if captain else "",
+            "player_count": len(players),
+            "player_names": [f"{p['first_name']} {p['last_name']}" for p in players]
+        })
+    scored = sorted([t for t in result if t["score"] is not None], key=lambda x: x["score"])
+    unscored = [t for t in result if t["score"] is None]
+    return scored + unscored
 
 @app.get("/api/admin/export/csv")
 async def export_registrations_csv(username: str = Depends(verify_admin)):

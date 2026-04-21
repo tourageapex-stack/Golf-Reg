@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Users, Trophy, LogOut, Trash2, Crown, Home, 
   RefreshCw, CheckCircle, AlertCircle, Download, FileSpreadsheet,
-  DollarSign, XCircle
+  DollarSign, XCircle, UserCheck, Printer, BarChart3
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -162,6 +162,73 @@ export default function AdminDashboard() {
     }
   };
 
+  const toggleCheckIn = async (playerId, isCheckedIn) => {
+    const headers = getAuthHeader();
+    if (!headers) return;
+    const action = isCheckedIn ? "undo-check-in" : "check-in";
+    try {
+      await axios.put(`${API}/admin/player/${playerId}/${action}`, {}, { headers });
+      toast.success(isCheckedIn ? "Check-in undone" : "Checked in!");
+      fetchData();
+    } catch (error) {
+      toast.error("Failed to update check-in");
+    }
+  };
+
+  const updateTeamScore = async (teamId, score) => {
+    const headers = getAuthHeader();
+    if (!headers) return;
+    try {
+      await axios.put(`${API}/admin/team/${teamId}/score`, { score: parseInt(score) }, { headers });
+      toast.success("Score updated");
+      fetchData();
+    } catch (error) {
+      toast.error("Failed to update score");
+    }
+  };
+
+  const printRoster = () => {
+    const printWindow = window.open('', '_blank');
+    const content = teams.map(team => {
+      const playerRows = team.players.map((p, i) => 
+        `<tr>
+          <td style="padding:6px 12px;border:1px solid #ddd">${i + 1}</td>
+          <td style="padding:6px 12px;border:1px solid #ddd">${p.first_name} ${p.last_name}${p.is_captain ? ' (Captain)' : ''}</td>
+          <td style="padding:6px 12px;border:1px solid #ddd">${p.phone}</td>
+          <td style="padding:6px 12px;border:1px solid #ddd">${p.payment_status === 'paid' ? 'Paid' : 'Unpaid'}</td>
+          <td style="padding:6px 12px;border:1px solid #ddd">${p.checked_in ? 'Yes' : 'No'}</td>
+        </tr>`
+      ).join('');
+      return `
+        <div style="margin-bottom:24px;page-break-inside:avoid">
+          <h2 style="background:#1a365d;color:white;padding:8px 12px;margin:0;font-size:16px">
+            Team ${team.team_number} ${team.score !== null ? `— Score: ${team.score}` : ''}
+          </h2>
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <tr style="background:#f0f0f0">
+              <th style="padding:6px 12px;border:1px solid #ddd;text-align:left">#</th>
+              <th style="padding:6px 12px;border:1px solid #ddd;text-align:left">Name</th>
+              <th style="padding:6px 12px;border:1px solid #ddd;text-align:left">Phone</th>
+              <th style="padding:6px 12px;border:1px solid #ddd;text-align:left">Payment</th>
+              <th style="padding:6px 12px;border:1px solid #ddd;text-align:left">Checked In</th>
+            </tr>
+            ${playerRows}
+          </table>
+        </div>`;
+    }).join('');
+    printWindow.document.write(`
+      <html><head><title>ILWU Local 4 Golf Tournament - Team Roster</title></head>
+      <body style="font-family:Arial,sans-serif;padding:20px">
+        <h1 style="text-align:center;color:#1a365d;margin-bottom:4px">ILWU Local 4 Golf Tournament</h1>
+        <p style="text-align:center;color:#666;margin-top:0">Team Roster — Club Green Meadows — September 3, 2026</p>
+        <hr style="margin:16px 0">
+        ${content}
+      </body></html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   if (loading && !stats) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -259,7 +326,26 @@ export default function AdminDashboard() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-3 mb-4">
+        <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
+          <div className="flex gap-3">
+            <Link to="/admin/checkin">
+              <Button className="bg-[#1a365d] hover:bg-[#0f2342]" data-testid="goto-checkin-btn">
+                <UserCheck className="h-4 w-4 mr-2" />
+                Check-In
+              </Button>
+            </Link>
+            <Link to="/leaderboard">
+              <Button variant="outline" className="border-[#1a365d] text-[#1a365d]" data-testid="goto-leaderboard-btn">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Leaderboard
+              </Button>
+            </Link>
+            <Button variant="outline" onClick={printRoster} className="border-[#1a365d] text-[#1a365d]" data-testid="print-roster-btn">
+              <Printer className="h-4 w-4 mr-2" />
+              Print Roster
+            </Button>
+          </div>
+          <div className="flex gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -292,6 +378,7 @@ export default function AdminDashboard() {
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -357,6 +444,25 @@ export default function AdminDashboard() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4">
+                      {/* Score Input */}
+                      <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-200">
+                        <span className="text-xs font-bold uppercase text-slate-500">Score:</span>
+                        <input
+                          type="number"
+                          defaultValue={team.score ?? ""}
+                          placeholder="—"
+                          onBlur={(e) => {
+                            if (e.target.value && parseInt(e.target.value) !== team.score) {
+                              updateTeamScore(team.id, e.target.value);
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") e.target.blur();
+                          }}
+                          className="w-20 h-8 text-center text-lg font-bold text-[#1a365d] border border-slate-200 rounded bg-white focus:border-[#f7dc00] focus:ring-1 focus:ring-[#f7dc00] outline-none"
+                          data-testid={`team-${team.team_number}-score-input`}
+                        />
+                      </div>
                       {team.players.length === 0 ? (
                         <p className="text-slate-400 text-sm italic">No players yet</p>
                       ) : (
@@ -387,6 +493,17 @@ export default function AdminDashboard() {
                                   data-testid={`toggle-payment-${player.id}`}
                                 >
                                   {player.payment_status === "paid" ? "Paid" : "Unpaid"}
+                                </button>
+                                <button
+                                  onClick={() => toggleCheckIn(player.id, player.checked_in)}
+                                  className={`text-xs px-2 py-0.5 rounded-full cursor-pointer font-semibold ${
+                                    player.checked_in
+                                      ? "bg-blue-600 text-white"
+                                      : "bg-slate-200 text-slate-500"
+                                  }`}
+                                  data-testid={`toggle-checkin-${player.id}`}
+                                >
+                                  {player.checked_in ? "Here" : "Not In"}
                                 </button>
                               </div>
                               <Button

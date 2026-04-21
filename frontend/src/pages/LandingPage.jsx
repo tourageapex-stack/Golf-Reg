@@ -92,6 +92,15 @@ export default function LandingPage() {
               <Trophy className="mr-2 h-5 w-5" />
               Register Team
             </Button>
+            <Button
+              onClick={() => navigate("/leaderboard")}
+              variant="outline"
+              className="border-2 border-[#f7dc00] text-[#f7dc00] hover:bg-[#f7dc00] hover:text-[#1a365d] font-bold uppercase tracking-wide py-6 px-8 text-lg transition-all duration-300"
+              data-testid="leaderboard-btn"
+            >
+              <Award className="mr-2 h-5 w-5" />
+              Leaderboard
+            </Button>
           </div>
           
           {/* Spots Remaining Badge */}

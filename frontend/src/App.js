@@ -7,6 +7,8 @@ import TeamRegistration from "@/pages/TeamRegistration";
 import Confirmation from "@/pages/Confirmation";
 import AdminLogin from "@/pages/AdminLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
+import CheckIn from "@/pages/CheckIn";
+import Leaderboard from "@/pages/Leaderboard";
 
 function App() {
   return (
@@ -19,6 +21,8 @@ function App() {
           <Route path="/confirmation" element={<Confirmation />} />
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/checkin" element={<CheckIn />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
         </Routes>
       </BrowserRouter>
       <Toaster position="top-right" />
