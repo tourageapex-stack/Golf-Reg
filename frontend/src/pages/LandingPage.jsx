@@ -29,9 +29,11 @@ export default function LandingPage() {
     fetchInfo();
   }, []);
 
-  const spotsRemaining = tournamentInfo 
-    ? (18 - tournamentInfo.current_teams) * 4 + (tournamentInfo.current_teams * 4 - tournamentInfo.current_players)
-    : 72;
+  const maxTeams = tournamentInfo?.max_teams || 25;
+  const totalSpots = maxTeams * 4;
+  const spotsRemaining = tournamentInfo
+    ? Math.max(0, totalSpots - tournamentInfo.current_players)
+    : totalSpots;
 
   return (
     <div className="min-h-screen">

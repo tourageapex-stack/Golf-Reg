@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Users, Trophy, LogOut, Trash2, Crown, Home, 
   RefreshCw, CheckCircle, AlertCircle, Download, FileSpreadsheet,
-  DollarSign, XCircle, UserCheck, Printer, BarChart3, Target, Zap, Star, Gift, Plus
+  DollarSign, XCircle, UserCheck, Printer, BarChart3, Target, Zap, Star, Gift, Plus, Flag
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,6 +32,150 @@ import {
 
 const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : '/api';
 const LOGO_URL = "/images/ilwu_logo.png";
+
+// Build a hole-indexed structure: [{ hole: 1, teams: [teamA, teamB?] }, ...]
+// Teams assigned to holes 1-7 may have a 2nd team (overflow teams 19-25)
+function buildHoleGroupings(teams) {
+  const byHole = new Map();
+  for (let h = 1; h <= 18; h++) byHole.set(h, []);
+  for (const t of teams) {
+    if (t.starting_hole && byHole.has(t.starting_hole)) {
+      byHole.get(t.starting_hole).push(t);
+    }
+  }
+  // Sort each hole so primary team (team_number <= 18) comes first
+  for (const list of byHole.values()) {
+    list.sort((a, b) => {
+      const aPrimary = a.team_number <= 18 ? 0 : 1;
+      const bPrimary = b.team_number <= 18 ? 0 : 1;
+      if (aPrimary !== bPrimary) return aPrimary - bPrimary;
+      return a.team_number - b.team_number;
+    });
+  }
+  return Array.from(byHole.entries()).map(([hole, teams]) => ({ hole, teams }));
+}
+
+function HoleGroupingsView({ teams, onPrint }) {
+  const groupings = buildHoleGroupings(teams);
+  const unassigned = teams.filter(t => !t.starting_hole);
+  const totalAssigned = teams.filter(t => t.starting_hole).length;
+
+  return (
+    <div className="space-y-6" data-testid="hole-groupings-view">
+      {/* Summary + Print */}
+      <Card className="shadow-lg border-0 bg-gradient-to-br from-[#1a365d] to-[#0f2342] text-white">
+        <CardContent className="p-6 flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-[#f7dc00] rounded-xl flex items-center justify-center shrink-0 rotate-3 shadow-md">
+              <Flag className="h-7 w-7 text-[#1a365d]" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#f7dc00]">Shotgun Start Layout</p>
+              <p className="font-heading text-xl md:text-2xl font-bold leading-tight">
+                {totalAssigned} team{totalAssigned !== 1 ? 's' : ''} assigned across 18 holes
+              </p>
+              <p className="text-xs text-white/70 mt-1">
+                Holes 1-7 have two groups (2nd group tees off after 1st clears the hole)
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={onPrint}
+            disabled={totalAssigned === 0}
+            className="bg-[#f7dc00] text-[#1a365d] hover:bg-[#ffe55c] font-bold uppercase tracking-wide"
+            data-testid="print-hole-groupings-btn"
+          >
+            <Printer className="h-4 w-4 mr-2" />
+            Print Layout
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Hole Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="hole-grid">
+        {groupings.map(({ hole, teams: holeTeams }) => {
+          const hasOverflow = holeTeams.length > 1;
+          const isEmpty = holeTeams.length === 0;
+          return (
+            <Card
+              key={hole}
+              className={`shadow-md hover:shadow-lg transition-shadow border-l-4 ${
+                isEmpty ? 'border-slate-200 bg-slate-50' : hasOverflow ? 'border-[#f7dc00] bg-[#f7dc00]/5' : 'border-[#1a365d]'
+              }`}
+              data-testid={`hole-card-${hole}`}
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 bg-[#1a365d] text-[#f7dc00] rounded-lg flex items-center justify-center shrink-0 font-heading font-bold text-lg">
+                      {hole}
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Hole</p>
+                      <p className="font-heading text-sm font-bold text-[#1a365d]">
+                        {holeTeams.length} / {hole <= 7 ? 2 : 1} groups
+                      </p>
+                    </div>
+                  </div>
+                  {hasOverflow && (
+                    <Badge className="bg-[#f7dc00] text-[#1a365d] hover:bg-[#f7dc00]">Shared</Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-2 pt-0">
+                {isEmpty ? (
+                  <p className="text-xs text-slate-400 italic py-2">No team assigned</p>
+                ) : (
+                  holeTeams.map((t, idx) => {
+                    const captain = t.players?.find(p => p.is_captain);
+                    const position = holeTeams.length > 1 ? (idx === 0 ? '1st' : '2nd') : null;
+                    return (
+                      <div
+                        key={t.id}
+                        className={`rounded-lg p-3 border ${
+                          position === '2nd' ? 'bg-[#f7dc00]/20 border-[#f7dc00]' : 'bg-white border-slate-200'
+                        }`}
+                        data-testid={`hole-${hole}-team-${t.team_number}`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            {position && (
+                              <span className="text-[9px] font-bold uppercase tracking-widest bg-[#1a365d] text-[#f7dc00] px-1.5 py-0.5 rounded">
+                                {position}
+                              </span>
+                            )}
+                            <span className="font-heading font-bold text-[#1a365d]">Team {t.team_number}</span>
+                          </div>
+                          <span className="text-[10px] text-slate-500">
+                            {(t.players || []).length} player{(t.players || []).length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        {captain && (
+                          <p className="text-xs text-slate-600 flex items-center gap-1">
+                            <Crown className="h-3 w-3 text-[#f7dc00]" />
+                            {captain.first_name} {captain.last_name}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {unassigned.length > 0 && (
+        <Card className="border-orange-300 bg-orange-50">
+          <CardContent className="p-4 text-sm text-orange-900">
+            <strong>Note:</strong> {unassigned.length} team{unassigned.length !== 1 ? 's have' : ' has'} no starting hole assigned (legacy data). Re-register or edit to assign.
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -282,6 +426,49 @@ export default function AdminDashboard() {
     printWindow.print();
   };
 
+  const printHoleGroupings = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+    const holes = buildHoleGroupings(teams);
+    const rows = holes.map(h => {
+      const teamsHtml = h.teams.length === 0
+        ? `<td colspan="2" style="padding:8px 12px;border:1px solid #ddd;color:#999;font-style:italic">No team assigned</td>`
+        : h.teams.map((t, idx) => {
+            const captain = t.players?.find(p => p.is_captain);
+            const label = h.teams.length > 1 ? (idx === 0 ? '1st' : '2nd') : '';
+            return `<td style="padding:8px 12px;border:1px solid #ddd;vertical-align:top">
+              ${label ? `<div style="font-size:10px;font-weight:bold;color:#f7dc00;background:#1a365d;display:inline-block;padding:2px 6px;border-radius:3px;margin-bottom:4px">${label} GROUP</div><br>` : ''}
+              <strong>Team ${t.team_number}</strong>
+              ${captain ? `<br><span style="color:#666;font-size:12px">Captain: ${captain.first_name} ${captain.last_name}</span>` : ''}
+              <br><span style="color:#666;font-size:11px">${(t.players || []).length} player${(t.players || []).length !== 1 ? 's' : ''}</span>
+            </td>`;
+          }).join('') + (h.teams.length === 1 ? `<td style="padding:8px 12px;border:1px solid #ddd;color:#999;font-style:italic">—</td>` : '');
+      return `<tr>
+        <td style="padding:8px 12px;border:1px solid #ddd;background:#f7dc00;font-weight:bold;width:80px;text-align:center;font-size:18px">HOLE ${h.hole}</td>
+        ${teamsHtml}
+      </tr>`;
+    }).join('');
+    printWindow.document.write(`
+      <html><head><title>Starting Hole Groupings - ILWU Local 4 Golf Tournament</title></head>
+      <body style="font-family:Arial,sans-serif;padding:20px">
+        <h1 style="text-align:center;color:#1a365d;margin-bottom:4px">Starting Hole Groupings</h1>
+        <p style="text-align:center;color:#666;margin-top:0">ILWU Local 4 Golf Tournament — Club Green Meadows — September 3, 2026</p>
+        <p style="text-align:center;color:#666;margin-top:0;font-size:12px">Shotgun start 8:00 AM · Holes 1-7 have two groups (2nd group starts after 1st)</p>
+        <hr style="margin:16px 0">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr style="background:#1a365d;color:white">
+            <th style="padding:8px;border:1px solid #1a365d">Hole</th>
+            <th style="padding:8px;border:1px solid #1a365d;text-align:left">1st Group</th>
+            <th style="padding:8px;border:1px solid #1a365d;text-align:left">2nd Group</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </body></html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   if (loading && !stats) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -441,6 +628,10 @@ export default function AdminDashboard() {
               <Trophy className="h-4 w-4 mr-2" />
               Teams ({teams.length})
             </TabsTrigger>
+            <TabsTrigger value="holes" className="data-[state=active]:bg-[#1a365d] data-[state=active]:text-white" data-testid="holes-tab">
+              <Flag className="h-4 w-4 mr-2" />
+              Hole Groupings
+            </TabsTrigger>
             <TabsTrigger value="players" className="data-[state=active]:bg-[#1a365d] data-[state=active]:text-white" data-testid="players-tab">
               <Users className="h-4 w-4 mr-2" />
               All Players ({players.length})
@@ -591,6 +782,11 @@ export default function AdminDashboard() {
                 ))
               )}
             </div>
+          </TabsContent>
+
+          {/* Hole Groupings Tab */}
+          <TabsContent value="holes">
+            <HoleGroupingsView teams={teams} onPrint={printHoleGroupings} />
           </TabsContent>
 
           {/* Players Tab */}
