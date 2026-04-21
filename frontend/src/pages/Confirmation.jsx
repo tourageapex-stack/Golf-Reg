@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Trophy, Users, MapPin, DollarSign, ArrowLeft, Home, Calendar, CreditCard, Sparkles } from "lucide-react";
+import { CheckCircle, Trophy, Users, MapPin, DollarSign, ArrowLeft, Home, Calendar, CreditCard, Sparkles, CalendarPlus } from "lucide-react";
 
 const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : '/api';
 const LOGO_URL = "/images/ilwu_logo.png";
@@ -182,6 +182,16 @@ export default function Confirmation() {
 
               {/* Actions */}
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <Button
+                  asChild
+                  className="flex-1 bg-[#f7dc00] text-[#1a365d] hover:bg-[#ffe55c] font-bold uppercase tracking-wide py-6"
+                  data-testid="add-to-calendar-btn"
+                >
+                  <a href={`${API}/calendar.ics`} download="ilwu-golf-tournament.ics">
+                    <CalendarPlus className="h-5 w-5 mr-2" />
+                    Add to Calendar
+                  </a>
+                </Button>
                 <Button
                   onClick={() => navigate("/")}
                   className="flex-1 bg-[#1a365d] text-white hover:bg-[#1a365d]/90 font-bold uppercase tracking-wide py-6"

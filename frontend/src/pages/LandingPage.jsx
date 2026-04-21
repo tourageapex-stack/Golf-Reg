@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MapPin, Calendar, DollarSign, Users, Trophy, Shield, Target, Star, Award, Zap, Gift, Clock, CreditCard, Sparkles } from "lucide-react";
+import { MapPin, Calendar, DollarSign, Users, Trophy, Shield, Target, Star, Award, Zap, Gift, Clock, CreditCard, Sparkles, CalendarPlus } from "lucide-react";
 
 const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : '/api';
 
@@ -136,6 +136,15 @@ export default function LandingPage() {
               <p className="font-heading text-2xl font-bold text-[#1a365d]">September 3, 2026</p>
               <p className="text-slate-600 mt-2">Registration opens at 7:00 AM</p>
               <p className="text-slate-600">Shotgun tee off at 8:00 AM</p>
+              <a
+                href={`${API}/calendar.ics`}
+                download="ilwu-golf-tournament.ics"
+                className="inline-flex items-center gap-1.5 mt-4 text-sm font-bold uppercase tracking-wider text-[#1a365d] hover:text-[#0f2342] border-b-2 border-[#f7dc00] pb-0.5 transition-colors"
+                data-testid="add-to-calendar-link"
+              >
+                <CalendarPlus className="h-4 w-4" />
+                Add to Calendar
+              </a>
             </Card>
             
             {/* Location Card */}

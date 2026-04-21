@@ -1,5 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, BackgroundTasks, Header
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, Response
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -12,6 +12,8 @@ import io
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional
@@ -51,6 +53,45 @@ REGULAR_PRICE = 150
 EARLY_BIRD_DEADLINE = datetime(2026, 6, 20, tzinfo=timezone.utc)
 EVENT_DATE = "September 3, 2026"
 EVENT_SCHEDULE = "Registration opens 7:00 AM · Shotgun tee off 8:00 AM"
+
+# ICS calendar file content (Sept 3, 2026, 7 AM - 3 PM Pacific)
+def build_ics() -> str:
+    return (
+        "BEGIN:VCALENDAR\r\n"
+        "VERSION:2.0\r\n"
+        "PRODID:-//ILWU Local 4//Golf Tournament//EN\r\n"
+        "CALSCALE:GREGORIAN\r\n"
+        "METHOD:PUBLISH\r\n"
+        "BEGIN:VTIMEZONE\r\n"
+        "TZID:America/Los_Angeles\r\n"
+        "BEGIN:DAYLIGHT\r\n"
+        "TZOFFSETFROM:-0800\r\n"
+        "TZOFFSETTO:-0700\r\n"
+        "TZNAME:PDT\r\n"
+        "DTSTART:19700308T020000\r\n"
+        "RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU\r\n"
+        "END:DAYLIGHT\r\n"
+        "BEGIN:STANDARD\r\n"
+        "TZOFFSETFROM:-0700\r\n"
+        "TZOFFSETTO:-0800\r\n"
+        "TZNAME:PST\r\n"
+        "DTSTART:19701101T020000\r\n"
+        "RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU\r\n"
+        "END:STANDARD\r\n"
+        "END:VTIMEZONE\r\n"
+        "BEGIN:VEVENT\r\n"
+        "UID:ilwu-local4-golf-tournament-2026@ilwulocal4.org\r\n"
+        "DTSTAMP:20260101T000000Z\r\n"
+        "DTSTART;TZID=America/Los_Angeles:20260903T070000\r\n"
+        "DTEND;TZID=America/Los_Angeles:20260903T150000\r\n"
+        "SUMMARY:ILWU Local 4 Golf Tournament\r\n"
+        "DESCRIPTION:Registration opens at 7:00 AM. Shotgun tee off at 8:00 AM."
+        " Best Ball Scramble - 4-Person Teams. Lunch included.\\n\\nSee you on the course!\r\n"
+        "LOCATION:Club Green Meadows\r\n"
+        "STATUS:CONFIRMED\r\n"
+        "END:VEVENT\r\n"
+        "END:VCALENDAR\r\n"
+    )
 
 def get_current_price():
     """Return early bird or regular price based on current date"""
@@ -285,7 +326,14 @@ ILWU Local 4
         part2 = MIMEText(html, 'html')
         msg.attach(part1)
         msg.attach(part2)
-        
+
+        # Attach .ics calendar invite
+        ics_part = MIMEBase('text', 'calendar', method='PUBLISH', name='ilwu-golf-tournament.ics')
+        ics_part.set_payload(build_ics())
+        encoders.encode_base64(ics_part)
+        ics_part.add_header('Content-Disposition', 'attachment; filename="ilwu-golf-tournament.ics"')
+        msg.attach(ics_part)
+
         # Send via Gmail SMTP
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
             server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
@@ -457,6 +505,15 @@ async def get_email_status():
         "sender": GMAIL_USER if EMAIL_ENABLED else None,
         "message": "Email confirmations enabled" if EMAIL_ENABLED else "Email not configured - add GMAIL_USER and GMAIL_APP_PASSWORD to .env"
     }
+
+@api_router.get("/calendar.ics")
+async def get_calendar_ics():
+    """Download the tournament event as an .ics calendar file"""
+    return Response(
+        content=build_ics(),
+        media_type="text/calendar; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="ilwu-golf-tournament.ics"'},
+    )
 
 @api_router.get("/tournament-info")
 async def get_tournament_info():
