@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, User, AlertCircle, DollarSign, Clock } from "lucide-react";
+import { ArrowLeft, User, AlertCircle, DollarSign, Clock, Users } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -17,6 +17,9 @@ export default function IndividualRegistration() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [tournamentInfo, setTournamentInfo] = useState(null);
+  const [availableTeams, setAvailableTeams] = useState([]);
+  const [joinExisting, setJoinExisting] = useState(false);
+  const [selectedTeamId, setSelectedTeamId] = useState("");
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -28,6 +31,7 @@ export default function IndividualRegistration() {
 
   useEffect(() => {
     axios.get(`${API}/tournament-info`).then(res => setTournamentInfo(res.data)).catch(() => {});
+    axios.get(`${API}/teams/available`).then(res => setAvailableTeams(res.data)).catch(() => {});
   }, []);
 
   const handleChange = (e) => {
@@ -53,6 +57,11 @@ export default function IndividualRegistration() {
       return;
     }
 
+    if (joinExisting && !selectedTeamId) {
+      toast.error("Please select a team captain to join");
+      return;
+    }
+
     setLoading(true);
     
     try {
@@ -61,7 +70,8 @@ export default function IndividualRegistration() {
         last_name: formData.last_name,
         phone: formData.phone,
         email: formData.email,
-        association: formData.association === "other" ? formData.customAssociation : formData.association
+        association: formData.association === "other" ? formData.customAssociation : formData.association,
+        ...(joinExisting && selectedTeamId ? { team_id: selectedTeamId } : {})
       };
 
       const response = await axios.post(`${API}/register/individual`, submitData);
@@ -223,6 +233,51 @@ export default function IndividualRegistration() {
                         placeholder="Enter your local number"
                         data-testid="custom-association-input"
                       />
+                    </div>
+                  )}
+
+                  {/* Join Existing Team Option */}
+                  {availableTeams.length > 0 && (
+                    <div className="space-y-4 border-t border-slate-200 pt-6">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          id="joinExisting"
+                          checked={joinExisting}
+                          onChange={(e) => {
+                            setJoinExisting(e.target.checked);
+                            if (!e.target.checked) setSelectedTeamId("");
+                          }}
+                          className="w-5 h-5 rounded border-slate-300 text-[#1a365d] focus:ring-[#1a365d] cursor-pointer"
+                          data-testid="join-existing-team-checkbox"
+                        />
+                        <Label htmlFor="joinExisting" className="text-sm font-bold uppercase tracking-wider text-slate-600 cursor-pointer">
+                          I have a team already — join an existing team
+                        </Label>
+                      </div>
+
+                      {joinExisting && (
+                        <div className="space-y-2">
+                          <Label className="text-sm font-bold uppercase tracking-wider text-slate-600">
+                            Select Your Team Captain *
+                          </Label>
+                          <Select onValueChange={(value) => setSelectedTeamId(value)} value={selectedTeamId}>
+                            <SelectTrigger className="h-12 bg-slate-50 border-slate-200" data-testid="team-captain-select">
+                              <SelectValue placeholder="Choose your team captain" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableTeams.map((team) => (
+                                <SelectItem key={team.team_id} value={team.team_id}>
+                                  <span className="flex items-center gap-2">
+                                    <Users className="h-4 w-4 text-[#1a365d] inline" />
+                                    Team {team.team_number} — Captain: {team.captain_name} ({team.spots_remaining} spot{team.spots_remaining > 1 ? 's' : ''} left)
+                                  </span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                     </div>
                   )}
 

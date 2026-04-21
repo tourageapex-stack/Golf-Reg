@@ -100,7 +100,7 @@ class TeamRegistration(BaseModel):
     players: List[PlayerCreate]  # 1-4 players
 
 class IndividualRegistration(PlayerCreate):
-    pass
+    team_id: Optional[str] = None  # Optional: join a specific team by ID
 
 class RegistrationResponse(BaseModel):
     success: bool
@@ -370,9 +370,32 @@ async def get_tournament_info():
         "payment_info": "Payment can be made at Local 4 Credit Union or at the Hall"
     }
 
+@api_router.get("/teams/available")
+async def get_available_teams_for_join():
+    """Get teams that have open spots, with captain info for the dropdown"""
+    teams = await db.teams.find({"is_full": False}, {"_id": 0}).sort("team_number", 1).to_list(100)
+    result = []
+    for team in teams:
+        player_ids = team.get("players", [])
+        if not player_ids:
+            continue  # skip empty teams (no captain yet)
+        captain = await db.players.find_one({"id": {"$in": player_ids}, "is_captain": True}, {"_id": 0})
+        if not captain:
+            continue
+        spots = MAX_PLAYERS_PER_TEAM - len(player_ids)
+        if spots <= 0:
+            continue
+        result.append({
+            "team_id": team["id"],
+            "team_number": team["team_number"],
+            "captain_name": f"{captain['first_name']} {captain['last_name']}",
+            "spots_remaining": spots
+        })
+    return result
+
 @api_router.post("/register/individual", response_model=RegistrationResponse)
 async def register_individual(player_data: IndividualRegistration, background_tasks: BackgroundTasks):
-    """Register an individual player - will be assigned to a team"""
+    """Register an individual player - will be assigned to a team or join a specific team"""
     # Check if registration is still open
     team_count = await db.teams.count_documents({})
     full_teams = await db.teams.count_documents({"is_full": True})
@@ -380,10 +403,18 @@ async def register_individual(player_data: IndividualRegistration, background_ta
     if team_count >= MAX_TEAMS and full_teams >= MAX_TEAMS:
         raise HTTPException(status_code=400, detail="Registration is full. No spots available.")
     
-    # Find or create team for this player
-    team = await find_or_create_team_for_individual()
-    if not team:
-        raise HTTPException(status_code=400, detail="No teams available. Registration is full.")
+    # If player chose a specific team, join that team
+    if player_data.team_id:
+        team = await db.teams.find_one({"id": player_data.team_id}, {"_id": 0})
+        if not team:
+            raise HTTPException(status_code=400, detail="Selected team not found.")
+        if team.get("is_full") or len(team.get("players", [])) >= MAX_PLAYERS_PER_TEAM:
+            raise HTTPException(status_code=400, detail="Selected team is already full.")
+    else:
+        # Find or create team for this player
+        team = await find_or_create_team_for_individual()
+        if not team:
+            raise HTTPException(status_code=400, detail="No teams available. Registration is full.")
     
     # Check if player will be captain (first in team)
     is_captain = len(team.get("players", [])) == 0
@@ -391,9 +422,10 @@ async def register_individual(player_data: IndividualRegistration, background_ta
     # Get registration order
     reg_order = await get_next_registration_order()
     
-    # Create player
+    # Create player - exclude team_id from player_data since we set it explicitly
+    player_dict_data = player_data.model_dump(exclude={"team_id"})
     player = Player(
-        **player_data.model_dump(),
+        **player_dict_data,
         team_id=team["id"],
         is_captain=is_captain,
         registration_order=reg_order
