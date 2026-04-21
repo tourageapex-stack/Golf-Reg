@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_greenmeadows-golf/artifacts/n4xo0dyh_IMG_1411.png";
+const LOGO_URL = "/images/ilwu_logo.png";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
