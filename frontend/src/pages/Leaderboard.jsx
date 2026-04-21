@@ -3,20 +3,27 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Award, Gift, Users, Home, ArrowLeft } from "lucide-react";
+import { Trophy, Award, Gift, Users, Home, Zap, Target, Star } from "lucide-react";
 
 const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : '/api';
 const LOGO_URL = "/images/ilwu_logo.png";
 
 export default function Leaderboard() {
   const [teams, setTeams] = useState([]);
+  const [competitions, setCompetitions] = useState([]);
+  const [raffles, setRaffles] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get(`${API}/leaderboard`)
-      .then(res => setTeams(res.data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    Promise.all([
+      axios.get(`${API}/leaderboard`),
+      axios.get(`${API}/competitions`),
+      axios.get(`${API}/raffles`)
+    ]).then(([teamsRes, compsRes, rafflesRes]) => {
+      setTeams(teamsRes.data);
+      setCompetitions(compsRes.data);
+      setRaffles(rafflesRes.data);
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   const scored = teams.filter(t => t.score !== null);
@@ -160,6 +167,59 @@ export default function Leaderboard() {
                     </div>
                   </div>
                   <span className="font-heading text-3xl font-bold text-[#f7dc00]">{lastPlace.score}</span>
+                </div>
+              </Card>
+            )}
+
+            {/* Competition Results */}
+            {competitions.length > 0 && (
+              <Card className="bg-white/5 border-white/10 overflow-hidden mt-6" data-testid="competition-results-section">
+                <div className="bg-[#1a365d] px-6 py-3">
+                  <h3 className="font-heading text-lg font-bold text-white uppercase">Competition Results</h3>
+                </div>
+                <div className="divide-y divide-white/5">
+                  {competitions.map(comp => (
+                    <div key={comp.id} className="flex items-center gap-4 px-6 py-4">
+                      {comp.competition_type === "long_drive" ? (
+                        <div className="w-10 h-10 bg-[#f7dc00]/20 rounded-full flex items-center justify-center">
+                          <Zap className="h-5 w-5 text-[#f7dc00]" />
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 bg-[#f7dc00]/20 rounded-full flex items-center justify-center">
+                          <Target className="h-5 w-5 text-[#f7dc00]" />
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-bold text-white">{comp.winner_name}</p>
+                        <p className="text-white/40 text-xs">
+                          {comp.competition_type === "long_drive" ? "Long Drive" : "Closest to Pin"}
+                          {comp.details && ` — ${comp.details}`}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {/* Raffle Winners */}
+            {raffles.length > 0 && (
+              <Card className="bg-white/5 border-white/10 overflow-hidden mt-6" data-testid="raffle-winners-section">
+                <div className="bg-gradient-to-r from-[#f7dc00] to-[#d4b800] px-6 py-3">
+                  <h3 className="font-heading text-lg font-bold text-[#1a365d] uppercase">Raffle Winners</h3>
+                </div>
+                <div className="divide-y divide-white/5">
+                  {raffles.map(raffle => (
+                    <div key={raffle.id} className="flex items-center gap-4 px-6 py-4">
+                      <div className="w-10 h-10 bg-[#f7dc00]/20 rounded-full flex items-center justify-center">
+                        <Star className="h-5 w-5 text-[#f7dc00]" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-white">{raffle.winner_name}</p>
+                        <p className="text-white/40 text-xs">{raffle.prize}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </Card>
             )}

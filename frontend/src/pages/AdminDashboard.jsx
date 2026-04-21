@@ -10,8 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Users, Trophy, LogOut, Trash2, Crown, Home, 
   RefreshCw, CheckCircle, AlertCircle, Download, FileSpreadsheet,
-  DollarSign, XCircle, UserCheck, Printer, BarChart3
+  DollarSign, XCircle, UserCheck, Printer, BarChart3, Target, Zap, Star, Gift, Plus
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,7 +39,11 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [teams, setTeams] = useState([]);
   const [players, setPlayers] = useState([]);
+  const [competitions, setCompetitions] = useState([]);
+  const [raffles, setRaffles] = useState([]);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, type: null, id: null, name: "" });
+  const [newCompetition, setNewCompetition] = useState({ competition_type: "long_drive", winner_name: "", details: "" });
+  const [newRaffle, setNewRaffle] = useState({ winner_name: "", prize: "" });
 
   const getAuthHeader = useCallback(() => {
     const auth = sessionStorage.getItem("adminAuth");
@@ -55,15 +60,19 @@ export default function AdminDashboard() {
 
     setLoading(true);
     try {
-      const [statsRes, teamsRes, playersRes] = await Promise.all([
+      const [statsRes, teamsRes, playersRes, compsRes, rafflesRes] = await Promise.all([
         axios.get(`${API}/admin/dashboard`, { headers }),
         axios.get(`${API}/admin/teams`, { headers }),
-        axios.get(`${API}/admin/players`, { headers })
+        axios.get(`${API}/admin/players`, { headers }),
+        axios.get(`${API}/competitions`),
+        axios.get(`${API}/raffles`)
       ]);
       
       setStats(statsRes.data);
       setTeams(teamsRes.data);
       setPlayers(playersRes.data);
+      setCompetitions(compsRes.data);
+      setRaffles(rafflesRes.data);
     } catch (error) {
       console.error("Error fetching data:", error);
       if (error.response?.status === 401) {
@@ -185,6 +194,50 @@ export default function AdminDashboard() {
     } catch (error) {
       toast.error("Failed to update score");
     }
+  };
+
+  const addCompetition = async () => {
+    if (!newCompetition.winner_name) { toast.error("Enter winner name"); return; }
+    const headers = getAuthHeader();
+    if (!headers) return;
+    try {
+      await axios.post(`${API}/admin/competition`, newCompetition, { headers });
+      toast.success("Competition result added");
+      setNewCompetition({ competition_type: "long_drive", winner_name: "", details: "" });
+      fetchData();
+    } catch (error) { toast.error("Failed to add result"); }
+  };
+
+  const deleteCompetition = async (id) => {
+    const headers = getAuthHeader();
+    if (!headers) return;
+    try {
+      await axios.delete(`${API}/admin/competition/${id}`, { headers });
+      toast.success("Result deleted");
+      fetchData();
+    } catch (error) { toast.error("Failed to delete"); }
+  };
+
+  const addRaffle = async () => {
+    if (!newRaffle.winner_name || !newRaffle.prize) { toast.error("Enter winner name and prize"); return; }
+    const headers = getAuthHeader();
+    if (!headers) return;
+    try {
+      await axios.post(`${API}/admin/raffle`, newRaffle, { headers });
+      toast.success("Raffle winner added");
+      setNewRaffle({ winner_name: "", prize: "" });
+      fetchData();
+    } catch (error) { toast.error("Failed to add winner"); }
+  };
+
+  const deleteRaffle = async (id) => {
+    const headers = getAuthHeader();
+    if (!headers) return;
+    try {
+      await axios.delete(`${API}/admin/raffle/${id}`, { headers });
+      toast.success("Winner deleted");
+      fetchData();
+    } catch (error) { toast.error("Failed to delete"); }
   };
 
   const printRoster = () => {
@@ -391,6 +444,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="players" className="data-[state=active]:bg-[#1a365d] data-[state=active]:text-white" data-testid="players-tab">
               <Users className="h-4 w-4 mr-2" />
               All Players ({players.length})
+            </TabsTrigger>
+            <TabsTrigger value="results" className="data-[state=active]:bg-[#1a365d] data-[state=active]:text-white" data-testid="results-tab">
+              <Target className="h-4 w-4 mr-2" />
+              Results & Raffles
             </TabsTrigger>
           </TabsList>
 
@@ -616,6 +673,142 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Results & Raffles Tab */}
+          <TabsContent value="results">
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Competition Results */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#1a365d] flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Competition Results
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Add form */}
+                  <div className="bg-slate-50 rounded-lg p-4 space-y-3">
+                    <div className="flex gap-2">
+                      <select
+                        value={newCompetition.competition_type}
+                        onChange={(e) => setNewCompetition({...newCompetition, competition_type: e.target.value})}
+                        className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm"
+                        data-testid="competition-type-select"
+                      >
+                        <option value="long_drive">Long Drive</option>
+                        <option value="closest_pin">Closest to Pin</option>
+                      </select>
+                      <Input
+                        placeholder="Winner name"
+                        value={newCompetition.winner_name}
+                        onChange={(e) => setNewCompetition({...newCompetition, winner_name: e.target.value})}
+                        className="flex-1"
+                        data-testid="competition-winner-input"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Details (e.g. 285 yards, 3ft 2in)"
+                        value={newCompetition.details}
+                        onChange={(e) => setNewCompetition({...newCompetition, details: e.target.value})}
+                        className="flex-1"
+                        data-testid="competition-details-input"
+                      />
+                      <Button onClick={addCompetition} className="bg-[#1a365d] hover:bg-[#0f2342]" data-testid="add-competition-btn">
+                        <Plus className="h-4 w-4 mr-1" /> Add
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Results list */}
+                  {competitions.length === 0 ? (
+                    <p className="text-center text-slate-400 py-4">No competition results yet</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {competitions.map(comp => (
+                        <div key={comp.id} className="flex items-center justify-between bg-white border rounded-lg px-4 py-3" data-testid={`competition-${comp.id}`}>
+                          <div className="flex items-center gap-3">
+                            {comp.competition_type === "long_drive" ? (
+                              <Zap className="h-5 w-5 text-[#f7dc00]" />
+                            ) : (
+                              <Target className="h-5 w-5 text-[#f7dc00]" />
+                            )}
+                            <div>
+                              <p className="font-semibold text-[#1a365d]">{comp.winner_name}</p>
+                              <p className="text-xs text-slate-500">
+                                {comp.competition_type === "long_drive" ? "Long Drive" : "Closest to Pin"}
+                                {comp.details && ` — ${comp.details}`}
+                              </p>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => deleteCompetition(comp.id)} className="text-red-500 hover:text-red-700 h-8 w-8 p-0" data-testid={`delete-competition-${comp.id}`}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Raffle Winners */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#1a365d] flex items-center gap-2">
+                    <Gift className="h-5 w-5" />
+                    Raffle Winners
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Add form */}
+                  <div className="bg-slate-50 rounded-lg p-4 space-y-3">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Winner name"
+                        value={newRaffle.winner_name}
+                        onChange={(e) => setNewRaffle({...newRaffle, winner_name: e.target.value})}
+                        className="flex-1"
+                        data-testid="raffle-winner-input"
+                      />
+                      <Input
+                        placeholder="Prize description"
+                        value={newRaffle.prize}
+                        onChange={(e) => setNewRaffle({...newRaffle, prize: e.target.value})}
+                        className="flex-1"
+                        data-testid="raffle-prize-input"
+                      />
+                      <Button onClick={addRaffle} className="bg-[#f7dc00] text-[#1a365d] hover:bg-[#d4b800]" data-testid="add-raffle-btn">
+                        <Plus className="h-4 w-4 mr-1" /> Add
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Winners list */}
+                  {raffles.length === 0 ? (
+                    <p className="text-center text-slate-400 py-4">No raffle winners yet</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {raffles.map(raffle => (
+                        <div key={raffle.id} className="flex items-center justify-between bg-white border rounded-lg px-4 py-3" data-testid={`raffle-${raffle.id}`}>
+                          <div className="flex items-center gap-3">
+                            <Star className="h-5 w-5 text-[#f7dc00]" />
+                            <div>
+                              <p className="font-semibold text-[#1a365d]">{raffle.winner_name}</p>
+                              <p className="text-xs text-slate-500">{raffle.prize}</p>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => deleteRaffle(raffle.id)} className="text-red-500 hover:text-red-700 h-8 w-8 p-0" data-testid={`delete-raffle-${raffle.id}`}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
         </Tabs>
       </main>
 

@@ -131,6 +131,29 @@ class DashboardStats(BaseModel):
     unpaid_players: int
     checked_in_players: int
 
+# Competition & Raffle Models
+class CompetitionResult(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    competition_type: str  # "long_drive", "closest_pin"
+    winner_name: str
+    details: Optional[str] = None  # e.g. "285 yards", "3 feet 2 inches"
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class CompetitionResultCreate(BaseModel):
+    competition_type: str
+    winner_name: str
+    details: Optional[str] = None
+
+class RaffleWinner(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    winner_name: str
+    prize: str
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class RaffleWinnerCreate(BaseModel):
+    winner_name: str
+    prize: str
+
 # Email Functions
 def send_confirmation_email(to_email: str, player_name: str, team_number: int, is_captain: bool, is_team_reg: bool = False, player_count: int = 1):
     """Send registration confirmation email via Gmail SMTP"""
@@ -902,6 +925,52 @@ async def get_leaderboard():
     scored = sorted([t for t in result if t["score"] is not None], key=lambda x: x["score"])
     unscored = [t for t in result if t["score"] is None]
     return scored + unscored
+
+# Competition Results endpoints
+@api_router.post("/admin/competition")
+async def add_competition_result(data: CompetitionResultCreate, username: str = Depends(verify_admin)):
+    """Add a competition result"""
+    result = CompetitionResult(**data.model_dump())
+    result_dict = result.model_dump()
+    await db.competitions.insert_one(result_dict)
+    return {"success": True, "message": f"Competition result added", "id": result.id}
+
+@api_router.get("/competitions")
+async def get_competitions():
+    """Get all competition results (public)"""
+    results = await db.competitions.find({}, {"_id": 0}).sort("created_at", 1).to_list(100)
+    return results
+
+@api_router.delete("/admin/competition/{result_id}")
+async def delete_competition_result(result_id: str, username: str = Depends(verify_admin)):
+    """Delete a competition result"""
+    res = await db.competitions.delete_one({"id": result_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Result not found")
+    return {"success": True, "message": "Competition result deleted"}
+
+# Raffle Winners endpoints
+@api_router.post("/admin/raffle")
+async def add_raffle_winner(data: RaffleWinnerCreate, username: str = Depends(verify_admin)):
+    """Add a raffle winner"""
+    winner = RaffleWinner(**data.model_dump())
+    winner_dict = winner.model_dump()
+    await db.raffles.insert_one(winner_dict)
+    return {"success": True, "message": f"Raffle winner added", "id": winner.id}
+
+@api_router.get("/raffles")
+async def get_raffles():
+    """Get all raffle winners (public)"""
+    results = await db.raffles.find({}, {"_id": 0}).sort("created_at", 1).to_list(100)
+    return results
+
+@api_router.delete("/admin/raffle/{winner_id}")
+async def delete_raffle_winner(winner_id: str, username: str = Depends(verify_admin)):
+    """Delete a raffle winner"""
+    res = await db.raffles.delete_one({"id": winner_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Winner not found")
+    return {"success": True, "message": "Raffle winner deleted"}
 
 @api_router.get("/admin/export/csv")
 async def export_registrations_csv(username: str = Depends(verify_admin)):

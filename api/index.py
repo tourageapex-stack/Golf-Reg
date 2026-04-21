@@ -688,6 +688,49 @@ async def get_leaderboard():
     unscored = [t for t in result if t["score"] is None]
     return scored + unscored
 
+class CompetitionResultCreate(BaseModel):
+    competition_type: str
+    winner_name: str
+    details: Optional[str] = None
+
+class RaffleWinnerCreate(BaseModel):
+    winner_name: str
+    prize: str
+
+@app.post("/api/admin/competition")
+async def add_competition_result(data: CompetitionResultCreate, username: str = Depends(verify_admin)):
+    result = {"id": str(uuid.uuid4()), **data.model_dump(), "created_at": datetime.now(timezone.utc).isoformat()}
+    await db.competitions.insert_one(result)
+    return {"success": True, "message": "Competition result added", "id": result["id"]}
+
+@app.get("/api/competitions")
+async def get_competitions():
+    return await db.competitions.find({}, {"_id": 0}).sort("created_at", 1).to_list(100)
+
+@app.delete("/api/admin/competition/{result_id}")
+async def delete_competition_result(result_id: str, username: str = Depends(verify_admin)):
+    res = await db.competitions.delete_one({"id": result_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Result not found")
+    return {"success": True, "message": "Competition result deleted"}
+
+@app.post("/api/admin/raffle")
+async def add_raffle_winner(data: RaffleWinnerCreate, username: str = Depends(verify_admin)):
+    winner = {"id": str(uuid.uuid4()), **data.model_dump(), "created_at": datetime.now(timezone.utc).isoformat()}
+    await db.raffles.insert_one(winner)
+    return {"success": True, "message": "Raffle winner added", "id": winner["id"]}
+
+@app.get("/api/raffles")
+async def get_raffles():
+    return await db.raffles.find({}, {"_id": 0}).sort("created_at", 1).to_list(100)
+
+@app.delete("/api/admin/raffle/{winner_id}")
+async def delete_raffle_winner(winner_id: str, username: str = Depends(verify_admin)):
+    res = await db.raffles.delete_one({"id": winner_id})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Winner not found")
+    return {"success": True, "message": "Raffle winner deleted"}
+
 @app.get("/api/admin/export/csv")
 async def export_registrations_csv(username: str = Depends(verify_admin)):
     players = await db.players.find({}, {"_id": 0}).sort("registration_order", 1).to_list(500)
