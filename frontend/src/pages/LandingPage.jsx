@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MapPin, Calendar, DollarSign, Users, Trophy, Shield, Target, Star, Award, Zap, Gift, Clock, CreditCard, Sparkles, CalendarPlus } from "lucide-react";
+import { MapPin, Calendar, DollarSign, Users, Trophy, Shield, Target, Star, Award, Zap, Gift, Clock, CreditCard, Sparkles, CalendarPlus, Share2 } from "lucide-react";
 
 const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : '/api';
 
@@ -100,6 +100,15 @@ export default function LandingPage() {
             >
               <Award className="mr-2 h-5 w-5" />
               Leaderboard
+            </Button>
+            <Button
+              onClick={() => navigate("/flyer")}
+              variant="outline"
+              className="border-2 border-white/60 text-white hover:bg-white/10 font-bold uppercase tracking-wide py-6 px-8 text-lg transition-all duration-300"
+              data-testid="share-event-btn"
+            >
+              <Share2 className="mr-2 h-5 w-5" />
+              Share Event
             </Button>
           </div>
           

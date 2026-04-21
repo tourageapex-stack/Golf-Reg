@@ -9,6 +9,7 @@ import AdminLogin from "@/pages/AdminLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
 import CheckIn from "@/pages/CheckIn";
 import Leaderboard from "@/pages/Leaderboard";
+import Flyer from "@/pages/Flyer";
 
 function App() {
   return (
@@ -23,6 +24,8 @@ function App() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/checkin" element={<CheckIn />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/flyer" element={<Flyer />} />
+          <Route path="/share" element={<Flyer />} />
         </Routes>
       </BrowserRouter>
       <Toaster position="top-right" />
