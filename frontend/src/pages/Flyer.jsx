@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : "/api";
 const LOGO_URL = "/images/ilwu_golf_logo.png";
+const SITE_URL = "https://localfore.vercel.app/";
 
 export default function Flyer() {
   const [info, setInfo] = useState(null);
@@ -18,7 +19,7 @@ export default function Flyer() {
   const handlePrint = () => window.print();
 
   const handleShare = async () => {
-    const url = window.location.origin;
+    const url = SITE_URL;
     const shareData = {
       title: "ILWU Local 4 Golf Tournament",
       text: "Join us September 3, 2026 at Club Green Meadows for the ILWU Local 4 Golf Tournament!",
@@ -151,7 +152,11 @@ export default function Flyer() {
                 </div>
               </div>
               <p className="text-sm text-slate-600 mt-3">
-                <span className="font-bold text-[#1a365d]">Format:</span> Best Ball Scramble · Shotgun start · 4-person teams · Max 18 teams · Lunch included
+                <span className="font-bold text-[#1a365d]">Format:</span> Best Ball Scramble · Shotgun start · 4-person teams · Max 18 teams
+              </p>
+              <p className="mt-3 inline-flex items-center gap-2 bg-[#1a365d] text-[#f7dc00] font-bold uppercase tracking-wide text-sm px-4 py-2 rounded-full shadow-md" data-testid="lunch-callout">
+                <Gift className="h-4 w-4" />
+                Lunch Provided — Included with Entry
               </p>
             </section>
 
@@ -263,7 +268,9 @@ export default function Flyer() {
                   <p className="bg-[#f7dc00]/30 border-l-4 border-[#f7dc00] px-3 py-2 text-xs">
                     <strong>Important:</strong> When paying at the Credit Union, please ask them to add a note with <strong>who the payment is for</strong>.
                   </p>
-                  <p className="text-xs text-slate-500 italic">Online payments coming soon!</p>
+                  <p className="bg-[#1a365d] text-[#f7dc00] font-bold uppercase tracking-wide text-sm px-3 py-2 rounded-lg text-center shadow-md" data-testid="online-payment-callout">
+                    Online Payments Coming Soon!
+                  </p>
                 </div>
               </div>
             </section>
@@ -274,7 +281,7 @@ export default function Flyer() {
             <div className="flex items-center gap-4">
               <div className="bg-white p-2 rounded-lg shrink-0" data-testid="flyer-qr">
                 <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(typeof window !== "undefined" ? window.location.origin : "")}`}
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(SITE_URL)}`}
                   alt="Register QR code"
                   className="w-24 h-24 block"
                 />
@@ -283,7 +290,7 @@ export default function Flyer() {
                 <p className="text-[10px] font-bold uppercase tracking-widest text-[#f7dc00]">Scan to Register</p>
                 <p className="font-heading text-xl font-bold leading-tight">Register Online</p>
                 <p className="text-xs text-white/70 break-all">
-                  {typeof window !== "undefined" ? window.location.origin.replace(/^https?:\/\//, "") : ""}
+                  {SITE_URL.replace(/^https?:\/\//, "").replace(/\/$/, "")}
                 </p>
               </div>
             </div>
