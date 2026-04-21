@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MapPin, Calendar, DollarSign, Users, Trophy, Shield, Target, Star, Award, Zap, Gift, Clock } from "lucide-react";
+import { MapPin, Calendar, DollarSign, Users, Trophy, Shield, Target, Star, Award, Zap, Gift, Clock, CreditCard, Sparkles } from "lucide-react";
 
 const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : '/api';
 
@@ -318,6 +318,41 @@ export default function LandingPage() {
             Payment can be made at the <strong>Local 4 Credit Union</strong> or at <strong>the Hall</strong>. 
             Please complete your registration online first, then arrange payment.
           </p>
+          <div className="max-w-2xl mx-auto mt-6 bg-[#1a365d] text-white rounded-xl p-5 text-left shadow-lg" data-testid="credit-union-note">
+            <div className="flex items-start gap-3">
+              <CreditCard className="h-6 w-6 text-[#f7dc00] shrink-0 mt-0.5" />
+              <p className="text-sm md:text-base">
+                <strong className="text-[#f7dc00] uppercase tracking-wide">Important:</strong>{" "}
+                When paying at the Credit Union, please ask them to add a note identifying <strong>who the payment is for</strong> so we can match it to your registration.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Online Payment Coming Soon Banner */}
+      <section className="py-10 bg-gradient-to-r from-[#0f2342] via-[#1a365d] to-[#0f2342]" data-testid="online-payment-coming-soon">
+        <div className="container mx-auto px-6">
+          <div className="max-w-3xl mx-auto relative overflow-hidden rounded-2xl border-2 border-[#f7dc00] bg-[#0f2342] p-8 md:p-10 shadow-2xl">
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#f7dc00]/10 rounded-full blur-2xl" />
+            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-[#f7dc00]/5 rounded-full blur-2xl" />
+            <div className="relative flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
+              <div className="w-20 h-20 bg-[#f7dc00] rounded-2xl flex items-center justify-center shrink-0 shadow-lg rotate-3">
+                <Sparkles className="h-10 w-10 text-[#1a365d]" />
+              </div>
+              <div className="flex-1">
+                <span className="inline-block bg-[#f7dc00] text-[#1a365d] text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3">
+                  Coming Soon
+                </span>
+                <h3 className="font-heading text-2xl md:text-3xl font-bold text-white uppercase mb-2">
+                  Online Payment Methods
+                </h3>
+                <p className="text-white/80 text-base md:text-lg">
+                  We're working on adding secure online payments so you can pay instantly. Stay tuned — it'll be available soon!
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

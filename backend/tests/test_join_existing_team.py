@@ -10,7 +10,7 @@ import os
 import random
 import string
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://golf-tournament-reg.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://golf-team-signup.preview.emergentagent.com')
 API_URL = f"{BASE_URL}/api"
 
 # Admin credentials

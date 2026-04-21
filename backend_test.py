@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 class GolfTournamentAPITester:
-    def __init__(self, base_url="https://golf-tournament-reg.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://golf-team-signup.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.admin_auth = ("admin", "ilwu4golf2024")
         self.tests_run = 0

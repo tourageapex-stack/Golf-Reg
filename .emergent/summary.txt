@@ -1,107 +1,123 @@
 <analysis>**original_problem_statement**: 
-Build a website for registration of a golf tournament for ILWU Local 4 at Club Green Meadows. Price: 50 per player, 00 a team. Include fields for first/last name, phone number, email, and association (local number or friend of local member). Randomly assign each team a number 1-18 without reusing numbers. Max 4 players per team, max 18 teams. Individual signups should be added to random teams in the order received. First player on a team is the captain. No payment integration required (payments made offline). Need a password-protected admin dashboard. Just have on-screen confirmation. Use uploaded ILWU branding logo.
+Build a website for registration of a golf tournament for ILWU Local 4 at Club Green Meadows. Needs individual and team registration (max 4 players, max 18 teams) with random team assignment. Requires an admin dashboard to manage players, teams, payments, check-ins, scores, and raffle/competition results. Currently configured to use MongoDB Atlas, deployed to Vercel, and sends automated confirmation emails via a Gmail SMTP setup.
 
 **User's preferred language**: English (You MUST respond in English only)
 
 **what currently exists?**: 
-A complete React + FastAPI + MongoDB web application for the golf tournament. Features include individual and team registration logic (with auto-assignment to 18 random teams), captain designation, an admin dashboard with CSV export functionality, and an integrated Gmail SMTP service for automatic email confirmations upon registration. 
+A fully functioning React + FastAPI + MongoDB web application deployed to Vercel. Features include:
+- Individual/Team registration with dynamic early bird pricing and event details.
+- Join existing team capability for individuals.
+- Admin dashboard protected by Token Auth (JWT).
+- Manual payment tracking (Paid/Unpaid), automated payment confirmation emails, and bulk Mark All Paid for teams.
+- Check-in tracking, score management, and a public Leaderboard page.
+- Competition tracking (Long Drive, Closest to Pin) and Raffle winner management.
+- Backend routing split for local preview () and Vercel serverless ().
 
 **Last working item**: 
-    - Last item agent was working: Answering the user's questions regarding admin login credentials ( / ). Just prior to this, the agent updated a stock image in the About This Event section based on the user's request.
-    - Status: NONE (All active requests fulfilled)
-    - Agent Testing Done: Y
-    - Which testing method agent to use?: NA
-    - User Testing Done: Y (User actively validated the SMTP email flow and image updates)
+    - Last item agent was working: The user requested text updates on the registration and confirmation pages: add a note to the payment instructions that the credit union needs to add a note on who paid, and add a section announcing that online payment methods are coming soon!. The agent searched for the relevant files but the session ended before edits were made.
+    - Status: NOT STARTED
+    - Agent Testing Done: N
+    - Which testing method agent to use?: screenshot tool
+    - User Testing Done: N
 
 **All Pending/In progress Issue list**: 
-None. 
+None currently.
 
 **In progress Task List**: 
-None.
+  Task Detail:
+  - Task 1: Update Payment Instructions text across the app
+     - Where to resume: Modify , , , and .
+     - What will be achieved with this?: Users will be instructed to ensure the credit union notes their name for payment, and are made aware that online payments are coming.
+     - Status: NOT STARTED
+     - Should Test frontend/backend/both after fix?: Frontend (screenshot tool)
+     - Blocked on something: No
 
 **Upcoming and Future Tasks**:
     Upcoming Tasks:
-    - Download external logo to local assets (P2): The user's ILWU logo () is currently fetched from an external Emergent URL. If the user continues with their plan to do custom hosting (Vercel/Railway), this asset should ideally be downloaded to  so it is contained in the GitHub repo. 
+    - Implement Zeffy payment integration (P1) - *Blocked: Waiting for the user to create a Zeffy account.*
     Future Tasks:
-    - Custom Deployment setup (P1): The user explored custom hosting but found the instructions pretty hard. They may ask for further assistance with GitHub, Railway, or Vercel deployment.
+    - Player self-service status check (P2)
 
 **Completed work in this session**:
-- Created full-stack application models and frontend pages (DONE)
-- Implemented core logic for individual/team creation and random 1-18 team assignment (DONE)
-- Created  dashboard with authentication (DONE)
-- Added Admin CSV Export functionality in  (DONE)
-- Integrated Gmail SMTP for confirmation emails in  (DONE)
-- Updated UI branding and replaced generic images (DONE)
+- Added dynamic early bird pricing and specific event dates to UI and emails (DONE)
+- Implemented Join existing team feature with captain selection dropdown (DONE)
+- Set up Vercel deployment with  serverless backend and  (DONE)
+- Migrated admin authentication from HTTP Basic to Token-based auth to prevent native browser popups (DONE)
+- Removed Emergent badge from  for production deployment (DONE)
+- Added manual payment tracking, dashboard statistics, and payment confirmation emails (DONE)
+- Built  and  pages (DONE)
+- Implemented competition results (Long drive, Closest to pin) and raffle tracking in Admin Dashboard (DONE)
 
 **Earlier issues found/mentioned but not fixed**: 
-None
+None.
 
 **Known issue recurrence from previous fork**: 
-None
-  - Status: NOT STARTED
+None. 
+- Status: RESOLVED
 
 **Code Architecture**:
 
 
 **Key Technical Concepts**: 
-React frontend, FastAPI backend, MongoDB, Shadcn UI, Tailwind CSS, built-in SMTP email dispatch. 
+React frontend, FastAPI backend, MongoDB Atlas, Shadcn UI, Tailwind CSS, Token-based Authentication, Vercel Serverless Functions (), Gmail SMTP for automated emails.
 
 **key DB schema**:
-  - : {,  (1-18),  (array), }
-  - : {, , , , , , , }
+  - : {uid=0(root) gid=0(root) groups=0(root), , , , }
+  - : {uid=0(root) gid=0(root) groups=0(root), , , , , , , ,  (paid/unpaid), , }
+  - : {uid=0(root) gid=0(root) groups=0(root), , , }
+  - : {uid=0(root) gid=0(root) groups=0(root), , }
 
 **changes in tech stack**: 
-None.
+- Transitioned from local MongoDB to MongoDB Atlas.
+- Transitioned backend architecture to support Vercel Serverless execution alongside local supervisor execution.
 
 **All files of reference**: 
-- : Houses all MongoDB models, routes for , , and SMTP logic.
-- : Main landing page with tournament details.
-- : Form for individual registrations.
-- : Form for full team registrations.
-- : Success page.
-- : Login page for the dashboard.
-- : Dashboard displaying teams/players with CSV export logic.
-- : Critical file. *Note: User manually added their own Gmail App Password here via VS Code UI.* Do not overwrite.
+- : **CRITICAL** New FastAPI routing file built specifically for Vercel serverless environments. 
+- : Local preview equivalent to . 
+- : Deployment config pointing  to .
+- : Heavily updated with new Tabs for Results/Raffles, Check-in logic, and manual payment tracking buttons.
+-  & : New frontend pages for viewing scores/raffles and checking in players.
+- : Cleaned up to remove the Emergent badge script.
 
 **Areas that need refactoring**: 
-None. 
+-  and  contain heavily duplicated logic. Any future backend edits MUST be made in BOTH files to ensure the preview environment matches the Vercel deployed environment. 
 
 **key api endpoints**:
+-  (Replaced basic auth)
 - 
 - 
 - 
+- 
+-  & 
 - 
 
 **Critical Info for New Agent**: 
-- **DO NOT overwrite  files.** The user manually added their real Gmail SMTP credentials via the code editor.
-- The user's requested admin credentials are: Username: , Password: . 
-- The user expressed that custom deployment was pretty hard. Be ready to offer highly simplified step-by-step guidance if they ask to resume deployment.
+- **Double Backend Maintenance:** All backend changes (endpoints, models, DB logic) must be applied to BOTH  and . The preview environment runs  via supervisor, while the Vercel deployment pulls directly from . 
+- **Authentication Changes:** The app now uses a token-based Bearer JWT strategy for the admin panel, as HTTP Basic caused forced native popups on Vercel. Do not revert to .
+- **Payment emails:** When a player is marked as paid via the admin dashboard, a confirmation email is automatically triggered. If a captain is marked as paid, the entire team is marked paid and all members receive emails.
 
 **documents and test reports created in this job**: 
-- 
-- 
-- 
+  - 
+  - 
+  - 
+  - 
+  - 
 
 **Last 10 User Messages and any pending HUMAN messages**: 
- - what's the admin user name and password? (Answered)
- - does the made with emergent link stay on the page when deployed? (Answered)
- - that's pretty hard. lets replace the image in the about this event area with this: [URL] (Completed)
- - lets go custom route (Answered with instructions)
- - when setting up mongodb atlas what provider am i using? aws, google cloud, or Azure? (Answered)
- - where do i custom host it? (Answered)
- - lets deploy (Answered with options)
- - are my images/assets pushed to github as well? (Answered)
- - if i want to change things do I use the agent or just edit the code? (Answered)
- - yes (User verified receipt of test email)
+ - lets add all that, but only team scores for leaderboard not individual holes, check in can be a separate page but in the admin dashboard (Completed)
+ - (Testing passed 100%, finish tool triggered)
+ - when a captain pays in full, have all players marked as paid. (Completed)
+ - add competition results and raffle winner tracking (Completed)
+ - for registration pages, Payment instructions: add that the credit union needs to add note on who paid. add a section that announces online payment methods coming soon! (Pending - Agent started to grep but didn't execute the change).
 
 **Project Health Check**: 
-All systems functional. No broken or mocked flows (SMTP is actively using user's real credentials). 
+All features fully functional. No broken or mocked flows. MongoDB Atlas is actively connected.
 
 **3rd Party Integrations**: 
-- Gmail SMTP Server (Email Confirmations) — requires User App Password (already configured by user in )
+- Gmail SMTP Server (Email Confirmations) — requires User App Password (already configured in backend )
 
 **Testing status**:
-  - Testing agent used after significant changes: YES
+  - Testing agent used after significant changes: YES (iterations 2, 3, 4)
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: None
   - Known regressions: None
@@ -112,4 +128,4 @@ All systems functional. No broken or mocked flows (SMTP is actively using user's
 - Admin Password: 
 
 **What agent forgot to execute**:
-The agent offered to download the external ILWU logo (IMG_1411.png) to  so it would be included in the user's GitHub repository for custom deployment. However, the user skipped past this offer to ask about deployment directly, so the action was never executed. The logo currently still relies on an external URL.</analysis>
+The agent did not implement the user's final request: Updating the UI text across , , , and  to instruct users to tell the credit union to note their name, and announcing that online payment methods are coming soon.</analysis>

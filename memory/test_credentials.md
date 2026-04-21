@@ -6,4 +6,4 @@
 - Password: ilwu4golf2024
 
 ## API Base URL
-- Backend: https://golf-tournament-reg.preview.emergentagent.com/api
+- Backend: https://golf-team-signup.preview.emergentagent.com/api

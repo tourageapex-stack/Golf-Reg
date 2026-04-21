@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, User, AlertCircle, DollarSign, Clock, Users } from "lucide-react";
+import { ArrowLeft, User, AlertCircle, DollarSign, Clock, Users, CreditCard, Sparkles } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : '/api';
@@ -322,6 +322,38 @@ export default function IndividualRegistration() {
                 <strong> Local 4 Credit Union</strong> or at <strong>the Hall</strong>.
               </AlertDescription>
             </Alert>
+
+            {/* Credit Union Note */}
+            <Card className="border-2 border-[#1a365d] bg-[#1a365d] text-white shadow-lg" data-testid="credit-union-note">
+              <CardContent className="p-5 flex items-start gap-3">
+                <CreditCard className="h-6 w-6 text-[#f7dc00] shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-bold text-[#f7dc00] uppercase tracking-wide text-xs mb-1">Important — Credit Union Payments</p>
+                  <p>Please ask the Credit Union to add a note with <strong>your name</strong> on the payment so we can match it to your registration.</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Online Payment Coming Soon */}
+            <Card className="relative overflow-hidden border-2 border-[#f7dc00] bg-gradient-to-br from-[#0f2342] to-[#1a365d] shadow-xl" data-testid="online-payment-coming-soon">
+              <div className="absolute -top-6 -right-6 w-28 h-28 bg-[#f7dc00]/10 rounded-full blur-2xl" />
+              <CardContent className="p-6 relative">
+                <div className="flex items-start gap-3 mb-2">
+                  <div className="w-11 h-11 bg-[#f7dc00] rounded-xl flex items-center justify-center shrink-0 rotate-3">
+                    <Sparkles className="h-6 w-6 text-[#1a365d]" />
+                  </div>
+                  <div>
+                    <span className="inline-block bg-[#f7dc00] text-[#1a365d] text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full mb-1">
+                      Coming Soon
+                    </span>
+                    <h4 className="font-heading text-lg font-bold text-white uppercase leading-tight">Online Payment Methods</h4>
+                  </div>
+                </div>
+                <p className="text-white/80 text-sm">
+                  We're adding secure online payments soon so you can pay instantly — stay tuned!
+                </p>
+              </CardContent>
+            </Card>
 
             {/* Team Assignment Info */}
             <Card className="border-0 shadow-lg">

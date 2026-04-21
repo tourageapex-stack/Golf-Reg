@@ -37,6 +37,10 @@ Build a website for registration of a golf tournament for ILWU Local 4. Location
 - **Print Roster** — opens printer-friendly view of all teams
 - Leaderboard button on landing page hero
 
+### Phase 5 (Feb 2026)
+- Credit Union payment note: instructs users to have the Credit Union add a note with the payer's name (on Landing, Individual Reg, Team Reg, Confirmation)
+- "Online Payment Methods — Coming Soon" prominent highlighted banner across all four pages
+
 ## Tech Stack
 - Frontend: React + Tailwind CSS + Shadcn UI
 - Backend: FastAPI + MongoDB Atlas
