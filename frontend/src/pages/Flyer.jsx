@@ -19,8 +19,9 @@ export default function Flyer() {
     axios.get(`${API}/tournament-info`).then((r) => setInfo(r.data)).catch(() => {});
   }, []);
 
-  // Total tournament capacity: 18 teams × 4 players = 72 spots
-  const TOTAL_SPOTS = 72;
+  // Total tournament capacity: max_teams × 4 players (default 25 × 4 = 100)
+  const TOTAL_TEAMS = info?.max_teams || 25;
+  const TOTAL_SPOTS = TOTAL_TEAMS * 4;
   const spotsRemaining = info ? Math.max(0, TOTAL_SPOTS - (info.current_players || 0)) : null;
   const spotsFilled = info ? (info.current_players || 0) : 0;
   const percentFilled = info ? Math.min(100, Math.round((spotsFilled / TOTAL_SPOTS) * 100)) : 0;
@@ -137,7 +138,7 @@ export default function Flyer() {
                   />
                 </div>
                 <p className="text-xs text-white/70 mt-2 text-right">
-                  {spotsFilled} of {TOTAL_SPOTS} players registered · {info.current_teams || 0} of 18 teams
+                  {spotsFilled} of {TOTAL_SPOTS} players registered · {info.current_teams || 0} of {TOTAL_TEAMS} teams
                 </p>
               </div>
             </div>
@@ -230,7 +231,7 @@ export default function Flyer() {
                 </div>
               </div>
               <p className="text-sm text-slate-600 mt-3">
-                <span className="font-bold text-[#1a365d]">Format:</span> Best Ball Scramble · Shotgun start · 4-person teams · Max 18 teams
+                <span className="font-bold text-[#1a365d]">Format:</span> Best Ball Scramble · Shotgun start · 4-person teams · Max 25 teams
               </p>
               <p className="mt-3 inline-flex items-center gap-2 bg-[#1a365d] text-[#f7dc00] font-bold uppercase tracking-wide text-sm px-4 py-2 rounded-full shadow-md" data-testid="lunch-callout">
                 <Gift className="h-4 w-4" />

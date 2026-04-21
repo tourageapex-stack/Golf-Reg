@@ -40,6 +40,18 @@ Build a website for registration of a golf tournament for ILWU Local 4. Location
 ### Phase 5 (Feb 2026)
 - Credit Union payment note: instructs users to have the Credit Union add a note with the payer's name (on Landing, Individual Reg, Team Reg, Confirmation)
 - "Online Payment Methods — Coming Soon" prominent highlighted banner across all four pages
+- Tee-off schedule: "Registration opens 7:00 AM · Shotgun tee off 8:00 AM" shown on Landing, Confirmation, and included in confirmation emails
+- "Add to Calendar" functionality: new `GET /api/calendar.ics` endpoint, .ics attached to registration emails, buttons on Landing and Confirmation pages
+- Printable Event Flyer at `/flyer` (and `/share`): letter-size, QR code to `https://localfore.vercel.app/`, Download PDF button (html2pdf.js), print-optimized CSS
+- Live Spots Counter on Flyer page (hidden on print/PDF)
+
+### Phase 6 (Feb 2026)
+- **Max teams raised from 18 → 25**
+- Smart team-number + starting-hole assignment:
+  - Teams 1-18: random team number 1-18, starting hole = team number (one team per hole for shotgun start)
+  - Teams 19-25: random team number 19-25, starting hole random 1-6 (second team on that hole)
+- `starting_hole` now returned in registration response, team list, admin dashboard (Hole X badge), confirmation page (hole pill), and confirmation emails (text + HTML)
+- Applied to both `/app/backend/server.py` and `/app/api/index.py`
 
 ## Tech Stack
 - Frontend: React + Tailwind CSS + Shadcn UI

@@ -255,7 +255,7 @@ export default function AdminDashboard() {
       return `
         <div style="margin-bottom:24px;page-break-inside:avoid">
           <h2 style="background:#1a365d;color:white;padding:8px 12px;margin:0;font-size:16px">
-            Team ${team.team_number} ${team.score !== null ? `— Score: ${team.score}` : ''}
+            Team ${team.team_number}${team.starting_hole ? ` — Hole ${team.starting_hole}${team.team_number > 18 ? ' (2nd)' : ''}` : ''} ${team.score !== null && team.score !== undefined ? `— Score: ${team.score}` : ''}
           </h2>
           <table style="width:100%;border-collapse:collapse;font-size:13px">
             <tr style="background:#f0f0f0">
@@ -465,9 +465,14 @@ export default function AdminDashboard() {
                   <Card key={team.id} className="shadow-lg hover:shadow-xl transition-shadow" data-testid={`team-card-${team.team_number}`}>
                     <CardHeader className="bg-[#1a365d] text-white py-4">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="font-heading text-xl flex items-center gap-2">
+                        <CardTitle className="font-heading text-xl flex items-center gap-2 flex-wrap">
                           <Trophy className="h-5 w-5 text-[#f7dc00]" />
                           Team {team.team_number}
+                          {team.starting_hole && (
+                            <span className="text-xs font-bold bg-[#f7dc00] text-[#1a365d] px-2 py-0.5 rounded-full uppercase tracking-wide" data-testid={`team-${team.team_number}-starting-hole`}>
+                              Hole {team.starting_hole}{team.team_number > 18 ? " (2nd)" : ""}
+                            </span>
+                          )}
                         </CardTitle>
                         <div className="flex items-center gap-2">
                           <Badge variant={team.is_full ? "default" : "secondary"} className={team.is_full ? "bg-[#2d5a27]" : "bg-orange-500"}>

@@ -70,6 +70,12 @@ export default function Confirmation() {
                     {registration.team_number}
                   </span>
                 </div>
+                {registration.starting_hole && (
+                  <div className="mt-4 inline-flex items-center gap-2 bg-[#f7dc00] text-[#1a365d] font-bold uppercase tracking-wide text-sm px-4 py-2 rounded-full shadow-md" data-testid="starting-hole">
+                    Starting Hole: {registration.starting_hole}
+                    {registration.team_number > 18 && <span className="text-xs font-normal normal-case">(2nd team on this hole)</span>}
+                  </div>
+                )}
               </div>
 
               {/* Registration Details */}

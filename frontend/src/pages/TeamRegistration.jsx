@@ -402,7 +402,7 @@ export default function TeamRegistration() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-[#f7dc00]">•</span>
-                    <span>Your team will be assigned a random number (1-18)</span>
+                    <span>Your team will be assigned a random number (1-25)</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-[#f7dc00]">•</span>

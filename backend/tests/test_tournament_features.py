@@ -106,7 +106,7 @@ class TestIndividualRegistration:
         
         assert data["success"] == True, "Expected success=True"
         assert "team_number" in data, "Missing team_number in response"
-        assert data["team_number"] >= 1 and data["team_number"] <= 18, f"Team number {data['team_number']} out of range 1-18"
+        assert data["team_number"] >= 1 and data["team_number"] <= 25, f"Team number {data['team_number']} out of range 1-25"
         
         print(f"SUCCESS: Individual registered to Team {data['team_number']}, captain={data.get('is_captain', False)}")
         return data

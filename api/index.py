@@ -38,7 +38,9 @@ GMAIL_APP_PASSWORD = os.environ.get('GMAIL_APP_PASSWORD', '')
 EMAIL_ENABLED = bool(GMAIL_USER and GMAIL_APP_PASSWORD)
 
 # Constants
-MAX_TEAMS = 18
+MAX_TEAMS = 25
+PRIMARY_TEAMS = 18  # Teams 1-18 start on holes 1-18 (one per hole)
+OVERFLOW_HOLES = 6  # Teams 19-25 start on holes 1-6 (second team on that hole)
 MAX_PLAYERS_PER_TEAM = 4
 EARLY_BIRD_PRICE = 125
 REGULAR_PRICE = 150
@@ -126,6 +128,7 @@ class Team(TeamBase):
     players: List[str] = []
     is_full: bool = False
     score: Optional[int] = None
+    starting_hole: Optional[int] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class TeamRegistration(BaseModel):
@@ -138,6 +141,7 @@ class RegistrationResponse(BaseModel):
     success: bool
     message: str
     team_number: Optional[int] = None
+    starting_hole: Optional[int] = None
     player_ids: List[str] = []
     is_captain: bool = False
 
@@ -148,6 +152,7 @@ class TeamWithPlayers(BaseModel):
     is_full: bool
     spots_remaining: int
     score: Optional[int] = None
+    starting_hole: Optional[int] = None
     created_at: str
 
 class DashboardStats(BaseModel):
@@ -165,7 +170,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 # Email Functions
-def send_confirmation_email(to_email: str, player_name: str, team_number: int, is_captain: bool, is_team_reg: bool = False, player_count: int = 1):
+def send_confirmation_email(to_email: str, player_name: str, team_number: int, is_captain: bool, is_team_reg: bool = False, player_count: int = 1, starting_hole: Optional[int] = None):
     if not EMAIL_ENABLED:
         logger.warning("Email not configured - skipping confirmation email")
         return False
@@ -179,6 +184,12 @@ def send_confirmation_email(to_email: str, player_name: str, team_number: int, i
         msg['From'] = GMAIL_USER
         msg['To'] = to_email
         reg_type = f"Team of {player_count}" if is_team_reg else "Individual"
+        hole_line_text = ""
+        hole_line_html = ""
+        if starting_hole:
+            suffix = " (2nd team on this hole)" if team_number > 18 else ""
+            hole_line_text = f"- Starting Hole: {starting_hole}{suffix}\n"
+            hole_line_html = f'<p><strong>Starting Hole:</strong> {starting_hole}{suffix}</p>'
         text = f"""
 ILWU Local 4 Golf Tournament - Registration Confirmation
 
@@ -189,7 +200,7 @@ Your registration has been confirmed!
 Registration Details:
 - Type: {reg_type}
 - Team Number: {team_number}
-{f'- Status: Team Captain' if is_captain else ''}
+{hole_line_text}{f'- Status: Team Captain' if is_captain else ''}
 
 Event Details:
 - Location: Club Green Meadows
@@ -244,6 +255,7 @@ ILWU Local 4
                 <h3>Registration Details</h3>
                 <p><strong>Type:</strong> {reg_type}</p>
                 <p><strong>Team Number:</strong> {team_number}</p>
+                {hole_line_html}
                 <p><strong>Amount Due:</strong> ${total_cost} ({pricing_label} Rate)</p>
             </div>
             <div class="details">
@@ -344,11 +356,23 @@ async def get_available_team_numbers():
     all_numbers = list(range(1, MAX_TEAMS + 1))
     return [n for n in all_numbers if n not in used_numbers]
 
-async def assign_team_number():
-    available = await get_available_team_numbers()
-    if not available:
-        return None
-    return random.choice(available)
+async def assign_team_slot():
+    """Assign a team number and starting hole.
+
+    - Teams 1-18: random from 1-18, starting hole = team number
+    - Teams 19-25: random from 19-25, starting hole = random 1-6
+    Returns (team_number, starting_hole) or (None, None) if full.
+    """
+    used_numbers = set(await db.teams.distinct("team_number"))
+    primary_available = [n for n in range(1, PRIMARY_TEAMS + 1) if n not in used_numbers]
+    if primary_available:
+        team_number = random.choice(primary_available)
+        return team_number, team_number
+    overflow_available = [n for n in range(PRIMARY_TEAMS + 1, MAX_TEAMS + 1) if n not in used_numbers]
+    if overflow_available:
+        team_number = random.choice(overflow_available)
+        return team_number, random.randint(1, OVERFLOW_HOLES)
+    return None, None
 
 async def find_or_create_team_for_individual():
     team = await db.teams.find_one({"is_full": False, "players": {"$ne": []}}, sort=[("created_at", 1)])
@@ -360,10 +384,10 @@ async def find_or_create_team_for_individual():
         if team:
             return team
         return None
-    team_number = await assign_team_number()
+    team_number, starting_hole = await assign_team_slot()
     if team_number is None:
         return None
-    new_team = Team(team_number=team_number)
+    new_team = Team(team_number=team_number, starting_hole=starting_hole)
     team_dict = new_team.model_dump()
     await db.teams.insert_one(team_dict)
     return team_dict
@@ -499,13 +523,14 @@ async def register_individual(player_data: IndividualRegistration, background_ta
     background_tasks.add_task(
         send_confirmation_email, player_data.email,
         f"{player_data.first_name} {player_data.last_name}",
-        team["team_number"], is_captain, False, 1
+        team["team_number"], is_captain, False, 1, team.get("starting_hole")
     )
     return RegistrationResponse(
         success=True,
         message=f"Successfully registered! You have been assigned to Team {team['team_number']}." +
                 (" You are the team captain!" if is_captain else ""),
         team_number=team["team_number"],
+        starting_hole=team.get("starting_hole"),
         player_ids=[player.id],
         is_captain=is_captain
     )
@@ -517,10 +542,10 @@ async def register_team(team_data: TeamRegistration, background_tasks: Backgroun
     team_count = await db.teams.count_documents({})
     if team_count >= MAX_TEAMS:
         raise HTTPException(status_code=400, detail="Maximum number of teams reached. Registration is full.")
-    team_number = await assign_team_number()
+    team_number, starting_hole = await assign_team_slot()
     if team_number is None:
         raise HTTPException(status_code=400, detail="No team numbers available.")
-    new_team = Team(team_number=team_number)
+    new_team = Team(team_number=team_number, starting_hole=starting_hole)
     team_dict = new_team.model_dump()
     await db.teams.insert_one(team_dict)
     player_ids = []
@@ -538,7 +563,7 @@ async def register_team(team_data: TeamRegistration, background_tasks: Backgroun
         background_tasks.add_task(
             send_confirmation_email, p_data.email,
             f"{p_data.first_name} {p_data.last_name}",
-            team_number, (i == 0), True, len(team_data.players)
+            team_number, (i == 0), True, len(team_data.players), starting_hole
         )
     is_full = len(player_ids) >= MAX_PLAYERS_PER_TEAM
     await db.teams.update_one({"id": new_team.id}, {"$set": {"players": player_ids, "is_full": is_full}})
@@ -546,6 +571,7 @@ async def register_team(team_data: TeamRegistration, background_tasks: Backgroun
         success=True,
         message=f"Team successfully registered! Your team number is {team_number}.",
         team_number=team_number,
+        starting_hole=starting_hole,
         player_ids=player_ids,
         is_captain=True
     )
@@ -564,6 +590,7 @@ async def get_all_teams():
             is_full=team.get("is_full", False),
             spots_remaining=MAX_PLAYERS_PER_TEAM - len(player_ids),
             score=team.get("score"),
+            starting_hole=team.get("starting_hole"),
             created_at=team.get("created_at", "")
         ))
     return result
