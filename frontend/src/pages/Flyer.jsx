@@ -348,7 +348,7 @@ export default function Flyer() {
                     <strong>Important:</strong> When paying at the Credit Union, please ask them to add a note with <strong>who the payment is for</strong>.
                   </p>
                   <p className="bg-[#1a365d] text-[#f7dc00] font-bold uppercase tracking-wide text-sm px-3 py-2 rounded-lg text-center shadow-md" data-testid="online-payment-callout">
-                    Online Payments Coming Soon!
+                    Pay Online Now Available!
                   </p>
                 </div>
               </div>

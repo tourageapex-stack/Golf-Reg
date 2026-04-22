@@ -167,8 +167,8 @@ export default function Confirmation() {
                 </div>
               </div>
 
-              {/* Online Payment Coming Soon */}
-              <div className="relative overflow-hidden rounded-xl border-2 border-[#f7dc00] bg-gradient-to-br from-[#0f2342] to-[#1a365d] shadow-xl" data-testid="online-payment-coming-soon">
+              {/* Online Payment Now Available */}
+              <div className="relative overflow-hidden rounded-xl border-2 border-[#f7dc00] bg-gradient-to-br from-[#0f2342] to-[#1a365d] shadow-xl" data-testid="pay-online-card">
                 <div className="absolute -top-6 -right-6 w-28 h-28 bg-[#f7dc00]/10 rounded-full blur-2xl" />
                 <div className="relative p-6 flex items-start gap-4">
                   <div className="w-12 h-12 bg-[#f7dc00] rounded-xl flex items-center justify-center shrink-0 rotate-3">
@@ -176,12 +176,20 @@ export default function Confirmation() {
                   </div>
                   <div className="flex-1">
                     <span className="inline-block bg-[#f7dc00] text-[#1a365d] text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full mb-2">
-                      Coming Soon
+                      Now Available
                     </span>
-                    <h4 className="font-heading text-lg font-bold text-white uppercase leading-tight mb-1">Online Payment Methods</h4>
-                    <p className="text-white/80 text-sm">
-                      We're adding secure online payments soon so you can pay instantly — stay tuned!
+                    <h4 className="font-heading text-lg font-bold text-white uppercase leading-tight mb-1">Pay Online Instantly</h4>
+                    <p className="text-white/80 text-sm mb-3">
+                      Skip the trip — secure online payment is now live.
                     </p>
+                    <Button
+                      onClick={() => navigate("/pay")}
+                      className="bg-[#f7dc00] text-[#1a365d] hover:bg-[#ffe55c] font-bold uppercase tracking-wide"
+                      data-testid="pay-online-btn"
+                    >
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Pay Online Now
+                    </Button>
                   </div>
                 </div>
               </div>

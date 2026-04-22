@@ -351,8 +351,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Online Payment Coming Soon Banner */}
-      <section className="py-10 bg-gradient-to-r from-[#0f2342] via-[#1a365d] to-[#0f2342]" data-testid="online-payment-coming-soon">
+      {/* Online Payment Now Available Banner */}
+      <section className="py-10 bg-gradient-to-r from-[#0f2342] via-[#1a365d] to-[#0f2342]" data-testid="pay-online-banner">
         <div className="container mx-auto px-6">
           <div className="max-w-3xl mx-auto relative overflow-hidden rounded-2xl border-2 border-[#f7dc00] bg-[#0f2342] p-8 md:p-10 shadow-2xl">
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#f7dc00]/10 rounded-full blur-2xl" />
@@ -363,15 +363,23 @@ export default function LandingPage() {
               </div>
               <div className="flex-1">
                 <span className="inline-block bg-[#f7dc00] text-[#1a365d] text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3">
-                  Coming Soon
+                  Now Available
                 </span>
                 <h3 className="font-heading text-2xl md:text-3xl font-bold text-white uppercase mb-2">
-                  Online Payment Methods
+                  Pay Online Instantly
                 </h3>
                 <p className="text-white/80 text-base md:text-lg">
-                  We're working on adding secure online payments so you can pay instantly. Stay tuned — it'll be available soon!
+                  Secure online payment is now live — pay your entry fee in seconds.
                 </p>
               </div>
+              <Button
+                onClick={() => navigate("/pay")}
+                className="bg-[#f7dc00] text-[#1a365d] hover:bg-[#ffe55c] font-bold uppercase tracking-wide py-6 px-8 text-base shadow-xl"
+                data-testid="pay-online-cta-btn"
+              >
+                <CreditCard className="mr-2 h-5 w-5" />
+                Pay Now
+              </Button>
             </div>
           </div>
         </div>
