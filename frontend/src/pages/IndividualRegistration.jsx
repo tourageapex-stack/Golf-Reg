@@ -330,26 +330,6 @@ export default function IndividualRegistration() {
               </CardContent>
             </Card>
 
-            {/* Payment Notice */}
-            <Alert className="bg-[#f7dc00] border-[#f7dc00]">
-              <AlertCircle className="h-5 w-5 text-[#1a365d]" />
-              <AlertDescription className="text-[#1a365d] font-medium">
-                <strong>Payment Instructions:</strong> After completing registration, please arrange payment at the 
-                <strong> Local 4 Credit Union</strong> or at <strong>the Hall</strong>.
-              </AlertDescription>
-            </Alert>
-
-            {/* Credit Union Note */}
-            <Card className="border-2 border-[#1a365d] bg-[#1a365d] text-white shadow-lg" data-testid="credit-union-note">
-              <CardContent className="p-5 flex items-start gap-3">
-                <CreditCard className="h-6 w-6 text-[#f7dc00] shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-bold text-[#f7dc00] uppercase tracking-wide text-xs mb-1">Important — Credit Union Payments</p>
-                  <p>Please ask the Credit Union to add a note with <strong>your name</strong> on the payment so we can match it to your registration.</p>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Online Payment Now Available */}
             <Card className="relative overflow-hidden border-2 border-[#f7dc00] bg-gradient-to-br from-[#0f2342] to-[#1a365d] shadow-xl" data-testid="pay-online-card">
               <div className="absolute -top-6 -right-6 w-28 h-28 bg-[#f7dc00]/10 rounded-full blur-2xl" />
@@ -360,7 +340,7 @@ export default function IndividualRegistration() {
                   </div>
                   <div>
                     <span className="inline-block bg-[#f7dc00] text-[#1a365d] text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full mb-1">
-                      Now Available
+                      Preferred
                     </span>
                     <h4 className="font-heading text-lg font-bold text-white uppercase leading-tight">Pay Online Instantly</h4>
                   </div>
@@ -376,6 +356,26 @@ export default function IndividualRegistration() {
                   <CreditCard className="h-4 w-4 mr-2" />
                   Pay Online Now
                 </Button>
+              </CardContent>
+            </Card>
+
+            {/* Payment Notice */}
+            <Alert className="bg-[#f7dc00] border-[#f7dc00]">
+              <AlertCircle className="h-5 w-5 text-[#1a365d]" />
+              <AlertDescription className="text-[#1a365d] font-medium">
+                <strong>Online payment preferred.</strong> Otherwise arrange payment at the{" "}
+                <strong>Local 4 Credit Union</strong> or at <strong>the Hall</strong>.
+              </AlertDescription>
+            </Alert>
+
+            {/* Credit Union Note */}
+            <Card className="border-2 border-[#1a365d] bg-[#1a365d] text-white shadow-lg" data-testid="credit-union-note">
+              <CardContent className="p-5 flex items-start gap-3">
+                <CreditCard className="h-6 w-6 text-[#f7dc00] shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-bold text-[#f7dc00] uppercase tracking-wide text-xs mb-1">Important — Credit Union Payments</p>
+                  <p>Please ask the Credit Union to add a note with <strong>your name</strong> on the payment so we can match it to your registration.</p>
+                </div>
               </CardContent>
             </Card>
 

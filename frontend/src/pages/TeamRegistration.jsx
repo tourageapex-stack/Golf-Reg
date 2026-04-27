@@ -349,6 +349,35 @@ export default function TeamRegistration() {
               </CardContent>
             </Card>
 
+            {/* Online Payment Now Available */}
+            <Card className="relative overflow-hidden border-2 border-[#f7dc00] bg-gradient-to-br from-[#0f2342] to-[#1a365d] shadow-xl" data-testid="pay-online-card">
+              <div className="absolute -top-6 -right-6 w-28 h-28 bg-[#f7dc00]/10 rounded-full blur-2xl" />
+              <CardContent className="p-6 relative">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-11 h-11 bg-[#f7dc00] rounded-xl flex items-center justify-center shrink-0 rotate-3">
+                    <Sparkles className="h-6 w-6 text-[#1a365d]" />
+                  </div>
+                  <div>
+                    <span className="inline-block bg-[#f7dc00] text-[#1a365d] text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full mb-1">
+                      Preferred
+                    </span>
+                    <h4 className="font-heading text-lg font-bold text-white uppercase leading-tight">Pay Online Instantly</h4>
+                  </div>
+                </div>
+                <p className="text-white/80 text-sm mb-4">
+                  Captains — pay the full team entry fee securely online in seconds.
+                </p>
+                <Button
+                  onClick={() => navigate("/pay")}
+                  className="w-full bg-[#f7dc00] text-[#1a365d] hover:bg-[#ffe55c] font-bold uppercase tracking-wide"
+                  data-testid="pay-online-btn"
+                >
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Pay Online Now
+                </Button>
+              </CardContent>
+            </Card>
+
             {/* Captain Payment Notice */}
             <Card className="border-2 border-[#f7dc00] bg-[#f7dc00]/10 shadow-lg" data-testid="captain-payment-notice">
               <CardContent className="p-6 flex items-start gap-4">
@@ -366,8 +395,8 @@ export default function TeamRegistration() {
             <Alert className="bg-[#f7dc00] border-[#f7dc00]">
               <AlertCircle className="h-5 w-5 text-[#1a365d]" />
               <AlertDescription className="text-[#1a365d] font-medium">
-                <strong>Payment Instructions:</strong> After completing registration, please arrange payment at the 
-                <strong> Local 4 Credit Union</strong> or at <strong>the Hall</strong>.
+                <strong>Online payment preferred.</strong> Otherwise arrange payment at the{" "}
+                <strong>Local 4 Credit Union</strong> or at <strong>the Hall</strong>.
               </AlertDescription>
             </Alert>
 
@@ -379,35 +408,6 @@ export default function TeamRegistration() {
                   <p className="font-bold text-[#f7dc00] uppercase tracking-wide text-xs mb-1">Important — Credit Union Payments</p>
                   <p>Please ask the Credit Union to add a note with <strong>the captain's name</strong> on the payment so we can match it to your team registration.</p>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Online Payment Now Available */}
-            <Card className="relative overflow-hidden border-2 border-[#f7dc00] bg-gradient-to-br from-[#0f2342] to-[#1a365d] shadow-xl" data-testid="pay-online-card">
-              <div className="absolute -top-6 -right-6 w-28 h-28 bg-[#f7dc00]/10 rounded-full blur-2xl" />
-              <CardContent className="p-6 relative">
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="w-11 h-11 bg-[#f7dc00] rounded-xl flex items-center justify-center shrink-0 rotate-3">
-                    <Sparkles className="h-6 w-6 text-[#1a365d]" />
-                  </div>
-                  <div>
-                    <span className="inline-block bg-[#f7dc00] text-[#1a365d] text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full mb-1">
-                      Now Available
-                    </span>
-                    <h4 className="font-heading text-lg font-bold text-white uppercase leading-tight">Pay Online Instantly</h4>
-                  </div>
-                </div>
-                <p className="text-white/80 text-sm mb-4">
-                  Captains — pay the full team entry fee securely online in seconds.
-                </p>
-                <Button
-                  onClick={() => navigate("/pay")}
-                  className="w-full bg-[#f7dc00] text-[#1a365d] hover:bg-[#ffe55c] font-bold uppercase tracking-wide"
-                  data-testid="pay-online-btn"
-                >
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Pay Online Now
-                </Button>
               </CardContent>
             </Card>
 
