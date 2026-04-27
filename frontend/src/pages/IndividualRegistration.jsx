@@ -208,13 +208,29 @@ export default function IndividualRegistration() {
                         <SelectValue placeholder="Select your association" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Local 4">Local 4 Member</SelectItem>
-                        <SelectItem value="Local 8">Local 8 Member</SelectItem>
-                        <SelectItem value="Local 19">Local 19 Member</SelectItem>
-                        <SelectItem value="Local 23">Local 23 Member</SelectItem>
-                        <SelectItem value="Local 40">Local 40 Member</SelectItem>
-                        <SelectItem value="friend">Friend of Local Member</SelectItem>
+                        <SelectItem value="Local 4">Local 4</SelectItem>
+                        <SelectItem value="Local 8">Local 8</SelectItem>
+                        <SelectItem value="Local 21">Local 21</SelectItem>
+                        <SelectItem value="Local 40">Local 40</SelectItem>
+                        <SelectItem value="Local 92">Local 92</SelectItem>
                         <SelectItem value="other">Other Local (specify)</SelectItem>
+                        <SelectItem value="friend">Friend of Local Member</SelectItem>
+                        <SelectItem value="Local 7">Local 7</SelectItem>
+                        <SelectItem value="Local 12">Local 12</SelectItem>
+                        <SelectItem value="Local 19">Local 19</SelectItem>
+                        <SelectItem value="Local 23">Local 23</SelectItem>
+                        <SelectItem value="Local 24">Local 24</SelectItem>
+                        <SelectItem value="Local 25">Local 25</SelectItem>
+                        <SelectItem value="Local 27">Local 27</SelectItem>
+                        <SelectItem value="Local 32">Local 32</SelectItem>
+                        <SelectItem value="Local 47">Local 47</SelectItem>
+                        <SelectItem value="Local 50">Local 50</SelectItem>
+                        <SelectItem value="Local 51">Local 51</SelectItem>
+                        <SelectItem value="Local 52">Local 52</SelectItem>
+                        <SelectItem value="Local 53">Local 53</SelectItem>
+                        <SelectItem value="Local 98">Local 98</SelectItem>
+                        <SelectItem value="IBU Puget Sound Region">IBU Puget Sound Region</SelectItem>
+                        <SelectItem value="IBU">IBU</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
