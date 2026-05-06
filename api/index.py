@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, BackgroundTasks, Header
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, BackgroundTasks, Header, UploadFile, File
 from fastapi.responses import StreamingResponse, Response
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -668,6 +668,110 @@ async def delete_team(team_id: str, username: str = Depends(verify_admin)):
     await db.teams.delete_one({"id": team_id})
     return {"success": True, "message": f"Team {team['team_number']} and all its players deleted"}
 
+@app.put("/api/admin/team/{team_id}/update")
+async def admin_update_team(team_id: str, payload: dict, username: str = Depends(verify_admin)):
+    team = await db.teams.find_one({"id": team_id}, {"_id": 0})
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    update = {}
+    if "team_number" in payload and payload["team_number"] is not None:
+        try: new_number = int(payload["team_number"])
+        except (TypeError, ValueError): raise HTTPException(status_code=400, detail="team_number must be an integer")
+        if new_number < 1 or new_number > MAX_TEAMS:
+            raise HTTPException(status_code=400, detail=f"team_number must be between 1 and {MAX_TEAMS}")
+        if new_number != team["team_number"]:
+            existing = await db.teams.find_one({"team_number": new_number, "id": {"$ne": team_id}})
+            if existing: raise HTTPException(status_code=409, detail=f"Team #{new_number} is already assigned")
+            update["team_number"] = new_number
+    if "starting_hole" in payload and payload["starting_hole"] is not None:
+        try: new_hole = int(payload["starting_hole"])
+        except (TypeError, ValueError): raise HTTPException(status_code=400, detail="starting_hole must be an integer")
+        if new_hole < 1 or new_hole > 18:
+            raise HTTPException(status_code=400, detail="starting_hole must be between 1 and 18")
+        update["starting_hole"] = new_hole
+    if not update:
+        return {"success": True, "message": "No changes"}
+    await db.teams.update_one({"id": team_id}, {"$set": update})
+    return {"success": True, "message": "Team updated", "team_id": team_id, "updated": update}
+
+@app.post("/api/admin/import/csv")
+async def admin_import_csv(file: UploadFile = File(...), username: str = Depends(verify_admin)):
+    if not file.filename or not file.filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Please upload a .csv file")
+    raw = await file.read()
+    try: text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError: text = raw.decode("latin-1")
+    reader = csv.DictReader(io.StringIO(text))
+    rows = list(reader)
+    if not rows:
+        raise HTTPException(status_code=400, detail="CSV file is empty")
+    teams_by_number: dict = {}
+    individuals: list = []
+    for r in rows:
+        tn_raw = (r.get("Team #") or r.get("Team Number") or r.get("team_number") or "").strip()
+        if not tn_raw or tn_raw.upper() == "N/A":
+            individuals.append(r); continue
+        try: tn = int(tn_raw)
+        except ValueError: individuals.append(r); continue
+        teams_by_number.setdefault(tn, []).append(r)
+
+    created_teams = skipped_teams = created_players = skipped_players = 0
+    errors: list = []
+
+    def hole_for(tn: int, csv_hole: str):
+        try:
+            if csv_hole and csv_hole.strip(): return int(csv_hole)
+        except ValueError: pass
+        if tn <= PRIMARY_TEAMS: return tn
+        return random.randint(1, OVERFLOW_HOLES)
+
+    for tn, team_rows in sorted(teams_by_number.items()):
+        if tn < 1 or tn > MAX_TEAMS:
+            errors.append(f"Team #{tn}: out of range — skipped"); skipped_teams += 1; continue
+        if await db.teams.find_one({"team_number": tn}):
+            errors.append(f"Team #{tn}: already exists — skipped"); skipped_teams += 1; continue
+        starting_hole = hole_for(tn, (team_rows[0].get("Starting Hole") or "").strip())
+        new_team = Team(team_number=tn, starting_hole=starting_hole)
+        await db.teams.insert_one(new_team.model_dump())
+        created_teams += 1
+        team_rows.sort(key=lambda r: 0 if (r.get("Captain", "").strip().lower() == "yes") else 1)
+        player_ids = []
+        for r in team_rows:
+            email = (r.get("Email") or "").strip().lower()
+            if not email: continue
+            if await db.players.find_one({"email": email}):
+                errors.append(f"{email}: already exists — skipped"); skipped_players += 1; continue
+            reg_order = await get_next_registration_order()
+            payment_status = "paid" if (r.get("Payment Status") or "").strip().lower() == "paid" else "unpaid"
+            player = Player(
+                first_name=(r.get("First Name") or "").strip(),
+                last_name=(r.get("Last Name") or "").strip(),
+                email=email,
+                phone=(r.get("Phone") or "").strip(),
+                association=(r.get("Association") or "").strip() or "Local 4",
+                team_id=new_team.id,
+                is_captain=(r.get("Captain", "").strip().lower() == "yes"),
+                payment_status=payment_status,
+                registration_order=reg_order,
+            )
+            await db.players.insert_one(player.model_dump())
+            player_ids.append(player.id)
+            created_players += 1
+        if not any((r.get("Captain", "").strip().lower() == "yes") for r in team_rows) and player_ids:
+            await db.players.update_one({"id": player_ids[0]}, {"$set": {"is_captain": True}})
+        is_full = len(player_ids) >= MAX_PLAYERS_PER_TEAM
+        await db.teams.update_one({"id": new_team.id}, {"$set": {"players": player_ids, "is_full": is_full}})
+
+    return {
+        "success": True,
+        "created_teams": created_teams, "skipped_teams": skipped_teams,
+        "created_players": created_players, "skipped_players": skipped_players,
+        "individual_rows_skipped": len(individuals),
+        "errors": errors,
+        "message": f"Imported {created_teams} team(s), {created_players} player(s). {skipped_teams} team(s) and {skipped_players} player(s) skipped.",
+    }
+
+
 @app.put("/api/admin/player/{player_id}/mark-paid")
 async def mark_player_paid(player_id: str, background_tasks: BackgroundTasks, username: str = Depends(verify_admin)):
     player = await db.players.find_one({"id": player_id}, {"_id": 0})
@@ -832,18 +936,23 @@ async def export_registrations_csv(username: str = Depends(verify_admin)):
         if player.get("team_id"):
             team = await db.teams.find_one({"id": player["team_id"]}, {"_id": 0})
             player["team_number"] = team["team_number"] if team else "N/A"
+            player["starting_hole"] = team.get("starting_hole") if team else ""
         else:
             player["team_number"] = "N/A"
+            player["starting_hole"] = ""
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["Registration #", "Team #", "Captain", "First Name", "Last Name", "Email", "Phone", "Association", "Registered At"])
+    writer.writerow(["Registration #", "Team #", "Starting Hole", "Captain", "First Name", "Last Name", "Email", "Phone", "Association", "Payment Status", "Payment Date", "Registered At"])
     for player in players:
         writer.writerow([
             player.get("registration_order", ""), player.get("team_number", "N/A"),
+            player.get("starting_hole", ""),
             "Yes" if player.get("is_captain", False) else "No",
             player.get("first_name", ""), player.get("last_name", ""),
             player.get("email", ""), player.get("phone", ""),
             player.get("association", ""),
+            player.get("payment_status", "unpaid").capitalize(),
+            player.get("payment_date", "")[:10] if player.get("payment_date") else "",
             player.get("created_at", "")[:10] if player.get("created_at") else ""
         ])
     output.seek(0)

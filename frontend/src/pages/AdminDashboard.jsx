@@ -9,10 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Users, Trophy, LogOut, Trash2, Crown, Home, 
-  RefreshCw, CheckCircle, AlertCircle, Download, FileSpreadsheet,
-  DollarSign, XCircle, UserCheck, Printer, BarChart3, Target, Zap, Star, Gift, Plus, Flag
+  RefreshCw, CheckCircle, AlertCircle, Download, FileSpreadsheet, Upload,
+  DollarSign, XCircle, UserCheck, Printer, BarChart3, Target, Zap, Star, Gift, Plus, Flag, Edit2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -188,6 +190,8 @@ export default function AdminDashboard() {
   const [deleteDialog, setDeleteDialog] = useState({ open: false, type: null, id: null, name: "" });
   const [newCompetition, setNewCompetition] = useState({ competition_type: "long_drive", winner_name: "", details: "" });
   const [newRaffle, setNewRaffle] = useState({ winner_name: "", prize: "" });
+  const [importDialog, setImportDialog] = useState({ open: false, file: null, importing: false, result: null });
+  const [editTeamDialog, setEditTeamDialog] = useState({ open: false, team: null, team_number: "", starting_hole: "", saving: false });
 
   const getAuthHeader = useCallback(() => {
     const auth = sessionStorage.getItem("adminAuth");
@@ -266,6 +270,65 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error("Export error:", error);
       toast.error("Failed to export data");
+    }
+  };
+
+  const handleImportCsv = async () => {
+    if (!importDialog.file) {
+      toast.error("Please choose a CSV file first");
+      return;
+    }
+    const headers = getAuthHeader();
+    if (!headers) return;
+    setImportDialog((d) => ({ ...d, importing: true, result: null }));
+    try {
+      const fd = new FormData();
+      fd.append("file", importDialog.file);
+      const res = await axios.post(`${API}/admin/import/csv`, fd, {
+        headers: { ...headers, "Content-Type": "multipart/form-data" },
+      });
+      setImportDialog((d) => ({ ...d, importing: false, result: res.data }));
+      toast.success(res.data.message || "Import complete");
+      fetchData();
+    } catch (error) {
+      console.error("Import error:", error);
+      const msg = error.response?.data?.detail || "Import failed";
+      setImportDialog((d) => ({ ...d, importing: false, result: { error: msg } }));
+      toast.error(msg);
+    }
+  };
+
+  const openEditTeam = (team) => {
+    setEditTeamDialog({
+      open: true,
+      team,
+      team_number: String(team.team_number),
+      starting_hole: team.starting_hole != null ? String(team.starting_hole) : "",
+      saving: false,
+    });
+  };
+
+  const handleSaveEditTeam = async () => {
+    const headers = getAuthHeader();
+    if (!headers) return;
+    setEditTeamDialog((d) => ({ ...d, saving: true }));
+    try {
+      await axios.put(
+        `${API}/admin/team/${editTeamDialog.team.id}/update`,
+        {
+          team_number: editTeamDialog.team_number === "" ? null : Number(editTeamDialog.team_number),
+          starting_hole: editTeamDialog.starting_hole === "" ? null : Number(editTeamDialog.starting_hole),
+        },
+        { headers }
+      );
+      toast.success("Team updated");
+      setEditTeamDialog({ open: false, team: null, team_number: "", starting_hole: "", saving: false });
+      fetchData();
+    } catch (error) {
+      console.error("Update team error:", error);
+      const msg = error.response?.data?.detail || "Failed to update team";
+      toast.error(msg);
+      setEditTeamDialog((d) => ({ ...d, saving: false }));
     }
   };
 
@@ -608,6 +671,15 @@ export default function AdminDashboard() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <Button
+            variant="outline"
+            onClick={() => setImportDialog({ open: true, file: null, importing: false, result: null })}
+            className="border-[#1a365d] text-[#1a365d] hover:bg-[#1a365d] hover:text-white"
+            data-testid="import-csv-btn"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Import CSV
+          </Button>
           <Button 
             variant="outline" 
             onClick={fetchData} 
@@ -678,6 +750,16 @@ export default function AdminDashboard() {
                           >
                             <DollarSign className="h-3 w-3 mr-1" />
                             All Paid
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditTeam(team)}
+                            className="text-white/70 hover:text-white hover:bg-white/10 h-8 w-8 p-0"
+                            data-testid={`edit-team-${team.team_number}-btn`}
+                            title="Edit team number / starting hole"
+                          >
+                            <Edit2 className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -1040,6 +1122,130 @@ export default function AdminDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Import CSV Dialog */}
+      <Dialog open={importDialog.open} onOpenChange={(open) => !importDialog.importing && setImportDialog((d) => ({ ...d, open }))}>
+        <DialogContent className="max-w-lg" data-testid="import-csv-dialog">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-xl text-[#1a365d]">Import Registrations from CSV</DialogTitle>
+            <DialogDescription>
+              Upload a CSV (same format as the Export). Existing teams &amp; players are preserved — only new ones are added.
+            </DialogDescription>
+          </DialogHeader>
+          {!importDialog.result ? (
+            <div className="space-y-4 py-2">
+              <div>
+                <Label htmlFor="csv-file" className="font-bold text-[#1a365d]">CSV file</Label>
+                <Input
+                  id="csv-file"
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={(e) => setImportDialog((d) => ({ ...d, file: e.target.files?.[0] || null }))}
+                  className="mt-1"
+                  data-testid="csv-file-input"
+                />
+                <p className="text-xs text-slate-500 mt-2">
+                  Required columns: <code>Team #</code>, <code>Captain</code>, <code>First Name</code>, <code>Last Name</code>, <code>Email</code>.
+                  Optional: <code>Starting Hole</code>, <code>Phone</code>, <code>Association</code>, <code>Payment Status</code>.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2 py-2 text-sm" data-testid="import-result">
+              {importDialog.result.error ? (
+                <p className="text-red-600 font-bold">{importDialog.result.error}</p>
+              ) : (
+                <>
+                  <p className="text-green-700 font-bold">{importDialog.result.message}</p>
+                  <ul className="text-slate-700 text-xs space-y-0.5 list-disc list-inside">
+                    <li>Created teams: {importDialog.result.created_teams}</li>
+                    <li>Created players: {importDialog.result.created_players}</li>
+                    <li>Skipped teams: {importDialog.result.skipped_teams}</li>
+                    <li>Skipped players: {importDialog.result.skipped_players}</li>
+                  </ul>
+                  {importDialog.result.errors?.length > 0 && (
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-slate-600 font-bold">View skip notes ({importDialog.result.errors.length})</summary>
+                      <ul className="text-xs text-slate-500 mt-1 max-h-40 overflow-auto list-disc list-inside">
+                        {importDialog.result.errors.map((e, i) => <li key={i}>{e}</li>)}
+                      </ul>
+                    </details>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            {!importDialog.result ? (
+              <>
+                <Button variant="outline" onClick={() => setImportDialog({ open: false, file: null, importing: false, result: null })} disabled={importDialog.importing}>Cancel</Button>
+                <Button
+                  onClick={handleImportCsv}
+                  disabled={!importDialog.file || importDialog.importing}
+                  className="bg-[#1a365d] text-white hover:bg-[#0f2342]"
+                  data-testid="confirm-import-btn"
+                >
+                  {importDialog.importing ? "Importing…" : "Import"}
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => setImportDialog({ open: false, file: null, importing: false, result: null })} className="bg-[#1a365d] text-white hover:bg-[#0f2342]">Close</Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Team Dialog */}
+      <Dialog open={editTeamDialog.open} onOpenChange={(open) => !editTeamDialog.saving && setEditTeamDialog((d) => ({ ...d, open }))}>
+        <DialogContent className="max-w-md" data-testid="edit-team-dialog">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-xl text-[#1a365d]">
+              Edit Team {editTeamDialog.team?.team_number}
+            </DialogTitle>
+            <DialogDescription>Change the team number or starting hole. Number must be unique (1–25).</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label htmlFor="edit-team-number" className="font-bold text-[#1a365d]">Team Number (1–25)</Label>
+              <Input
+                id="edit-team-number"
+                type="number"
+                min={1}
+                max={25}
+                value={editTeamDialog.team_number}
+                onChange={(e) => setEditTeamDialog((d) => ({ ...d, team_number: e.target.value }))}
+                data-testid="edit-team-number-input"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-starting-hole" className="font-bold text-[#1a365d]">Starting Hole (1–18)</Label>
+              <Input
+                id="edit-starting-hole"
+                type="number"
+                min={1}
+                max={18}
+                value={editTeamDialog.starting_hole}
+                onChange={(e) => setEditTeamDialog((d) => ({ ...d, starting_hole: e.target.value }))}
+                data-testid="edit-starting-hole-input"
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                Convention: Teams 1–18 start on their matching hole. Teams 19–25 share holes 1–7 as the 2nd group.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTeamDialog((d) => ({ ...d, open: false }))} disabled={editTeamDialog.saving}>Cancel</Button>
+            <Button
+              onClick={handleSaveEditTeam}
+              disabled={editTeamDialog.saving}
+              className="bg-[#1a365d] text-white hover:bg-[#0f2342]"
+              data-testid="save-edit-team-btn"
+            >
+              {editTeamDialog.saving ? "Saving…" : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
