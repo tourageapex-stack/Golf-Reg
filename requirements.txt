@@ -7,3 +7,4 @@ email-validator==2.3.0
 python-dotenv==1.2.1
 dnspython==2.8.0
 starlette==0.37.2
+python-multipart==0.0.21
