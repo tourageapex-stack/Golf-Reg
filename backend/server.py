@@ -55,6 +55,7 @@ REGULAR_PRICE = 150
 EARLY_BIRD_DEADLINE = datetime(2026, 6, 20, tzinfo=timezone.utc)
 EVENT_DATE = "September 3, 2026"
 EVENT_SCHEDULE = "Registration opens 7:00 AM · Shotgun tee off 8:00 AM"
+ZEFFY_PAYMENT_URL = "https://www.zeffy.com/ticketing/the-local-fore-scramble--2026"
 
 # ICS calendar file content (Sept 3, 2026, 7 AM - 3 PM Pacific)
 def build_ics() -> str:
@@ -249,9 +250,11 @@ Event Details:
 - Price: ${total_cost} ({pricing_label} Rate)
 
 PAYMENT INSTRUCTIONS:
-Please complete your payment at:
-- Local 4 Credit Union
-- Or at the Hall
+Online payment is preferred. Pay your {reg_type.lower()} tournament registration fee here:
+{ZEFFY_PAYMENT_URL}
+
+You can also pay at the Local 4 Credit Union or at the Hall.
+(If paying at the Credit Union, please ask them to add a note with your name so we can match the payment to your registration.)
 
 Thank you for registering! See you on the course.
 
@@ -317,10 +320,13 @@ ILWU Local 4
             </div>
             
             <div class="payment-box">
-                <h3>Payment Instructions</h3>
-                <p>Please complete your payment at:</p>
-                <p><strong>Local 4 Credit Union</strong></p>
-                <p><strong>Or at the Hall</strong></p>
+                <h3>Payment Instructions — {reg_type} Tournament Registration</h3>
+                <p style="margin-bottom:12px;"><strong>Online payment is preferred.</strong></p>
+                <p style="text-align:center;margin:16px 0;">
+                    <a href="{ZEFFY_PAYMENT_URL}" style="display:inline-block;background:#1a365d;color:#f7dc00;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold;text-transform:uppercase;letter-spacing:1px;font-size:14px;">Pay Online Now</a>
+                </p>
+                <p style="margin-top:16px;">You can also pay in person at the <strong>Local 4 Credit Union</strong> or at <strong>the Hall</strong>.</p>
+                <p style="font-size:12px;margin-top:12px;color:#1a365d;"><em>If paying at the Credit Union, please ask them to add a note with your name so we can match the payment to your registration.</em></p>
             </div>
             
             <p style="text-align: center; margin-top: 30px;">See you on the course!</p>
