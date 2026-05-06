@@ -696,15 +696,22 @@ async def admin_update_team(team_id: str, payload: dict, username: str = Depends
 
 @app.post("/api/admin/import/csv")
 async def admin_import_csv(file: UploadFile = File(...), username: str = Depends(verify_admin)):
-    if not file.filename or not file.filename.lower().endswith(".csv"):
-        raise HTTPException(status_code=400, detail="Please upload a .csv file")
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file received")
     raw = await file.read()
+    if not raw:
+        raise HTTPException(status_code=400, detail="The uploaded file is empty")
     try: text = raw.decode("utf-8-sig")
-    except UnicodeDecodeError: text = raw.decode("latin-1")
+    except UnicodeDecodeError:
+        try: text = raw.decode("utf-16")
+        except UnicodeDecodeError: text = raw.decode("latin-1", errors="replace")
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
     reader = csv.DictReader(io.StringIO(text))
     rows = list(reader)
     if not rows:
-        raise HTTPException(status_code=400, detail="CSV file is empty")
+        raise HTTPException(status_code=400, detail=f"CSV file appears empty or unreadable. First 100 chars: {text[:100]!r}")
+    if not reader.fieldnames or not any(("team" in (h or "").lower()) for h in reader.fieldnames):
+        raise HTTPException(status_code=400, detail=f"CSV is missing a 'Team #' column. Headers found: {reader.fieldnames}")
     teams_by_number: dict = {}
     individuals: list = []
     for r in rows:

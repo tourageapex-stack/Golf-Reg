@@ -1139,11 +1139,16 @@ export default function AdminDashboard() {
                 <Input
                   id="csv-file"
                   type="file"
-                  accept=".csv,text/csv"
+                  accept=".csv,.txt,text/csv,text/plain,text/comma-separated-values,application/csv,application/vnd.ms-excel,*/*"
                   onChange={(e) => setImportDialog((d) => ({ ...d, file: e.target.files?.[0] || null }))}
                   className="mt-1"
                   data-testid="csv-file-input"
                 />
+                {importDialog.file && (
+                  <p className="text-xs text-slate-600 mt-1">
+                    Selected: <strong>{importDialog.file.name}</strong> ({Math.round(importDialog.file.size / 1024)} KB)
+                  </p>
+                )}
                 <p className="text-xs text-slate-500 mt-2">
                   Required columns: <code>Team #</code>, <code>Captain</code>, <code>First Name</code>, <code>Last Name</code>, <code>Email</code>.
                   Optional: <code>Starting Hole</code>, <code>Phone</code>, <code>Association</code>, <code>Payment Status</code>.
