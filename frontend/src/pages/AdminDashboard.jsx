@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -190,7 +191,7 @@ export default function AdminDashboard() {
   const [deleteDialog, setDeleteDialog] = useState({ open: false, type: null, id: null, name: "" });
   const [newCompetition, setNewCompetition] = useState({ competition_type: "long_drive", winner_name: "", details: "" });
   const [newRaffle, setNewRaffle] = useState({ winner_name: "", prize: "" });
-  const [importDialog, setImportDialog] = useState({ open: false, file: null, importing: false, result: null });
+  const [importDialog, setImportDialog] = useState({ open: false, file: null, csvText: "", mode: "file", importing: false, result: null });
   const [editTeamDialog, setEditTeamDialog] = useState({ open: false, team: null, team_number: "", starting_hole: "", saving: false });
 
   const getAuthHeader = useCallback(() => {
@@ -274,16 +275,25 @@ export default function AdminDashboard() {
   };
 
   const handleImportCsv = async () => {
-    if (!importDialog.file) {
+    const headers = getAuthHeader();
+    if (!headers) return;
+    const usingPaste = importDialog.mode === "paste";
+    if (usingPaste && !importDialog.csvText.trim()) {
+      toast.error("Please paste CSV text first");
+      return;
+    }
+    if (!usingPaste && !importDialog.file) {
       toast.error("Please choose a CSV file first");
       return;
     }
-    const headers = getAuthHeader();
-    if (!headers) return;
     setImportDialog((d) => ({ ...d, importing: true, result: null }));
     try {
       const fd = new FormData();
-      fd.append("file", importDialog.file);
+      if (usingPaste) {
+        fd.append("csv_text", importDialog.csvText);
+      } else {
+        fd.append("file", importDialog.file);
+      }
       const res = await axios.post(`${API}/admin/import/csv`, fd, {
         headers: { ...headers, "Content-Type": "multipart/form-data" },
       });
@@ -673,7 +683,7 @@ export default function AdminDashboard() {
           </DropdownMenu>
           <Button
             variant="outline"
-            onClick={() => setImportDialog({ open: true, file: null, importing: false, result: null })}
+            onClick={() => setImportDialog({ open: true, file: null, csvText: "", mode: "file", importing: false, result: null })}
             className="border-[#1a365d] text-[#1a365d] hover:bg-[#1a365d] hover:text-white"
             data-testid="import-csv-btn"
           >
@@ -1134,26 +1144,68 @@ export default function AdminDashboard() {
           </DialogHeader>
           {!importDialog.result ? (
             <div className="space-y-4 py-2">
-              <div>
-                <Label htmlFor="csv-file" className="font-bold text-[#1a365d]">CSV file</Label>
-                <Input
-                  id="csv-file"
-                  type="file"
-                  accept=".csv,.txt,text/csv,text/plain,text/comma-separated-values,application/csv,application/vnd.ms-excel,*/*"
-                  onChange={(e) => setImportDialog((d) => ({ ...d, file: e.target.files?.[0] || null }))}
-                  className="mt-1"
-                  data-testid="csv-file-input"
-                />
-                {importDialog.file && (
-                  <p className="text-xs text-slate-600 mt-1">
-                    Selected: <strong>{importDialog.file.name}</strong> ({Math.round(importDialog.file.size / 1024)} KB)
-                  </p>
-                )}
-                <p className="text-xs text-slate-500 mt-2">
-                  Required columns: <code>Team #</code>, <code>Captain</code>, <code>First Name</code>, <code>Last Name</code>, <code>Email</code>.
-                  Optional: <code>Starting Hole</code>, <code>Phone</code>, <code>Association</code>, <code>Payment Status</code>.
-                </p>
+              {/* Mode toggle */}
+              <div className="flex gap-2 bg-slate-100 p-1 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setImportDialog((d) => ({ ...d, mode: "file" }))}
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-bold uppercase tracking-wide transition-colors ${importDialog.mode === "file" ? "bg-white text-[#1a365d] shadow-sm" : "text-slate-500"}`}
+                  data-testid="import-mode-file"
+                >
+                  Upload File
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImportDialog((d) => ({ ...d, mode: "paste" }))}
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-bold uppercase tracking-wide transition-colors ${importDialog.mode === "paste" ? "bg-white text-[#1a365d] shadow-sm" : "text-slate-500"}`}
+                  data-testid="import-mode-paste"
+                >
+                  Paste CSV Text
+                </button>
               </div>
+
+              {importDialog.mode === "file" ? (
+                <div>
+                  <Label htmlFor="csv-file" className="font-bold text-[#1a365d]">CSV file</Label>
+                  <Input
+                    id="csv-file"
+                    type="file"
+                    accept=".csv,.txt,text/csv,text/plain,text/comma-separated-values,application/csv,application/vnd.ms-excel,*/*"
+                    onChange={(e) => setImportDialog((d) => ({ ...d, file: e.target.files?.[0] || null }))}
+                    className="mt-1"
+                    data-testid="csv-file-input"
+                  />
+                  {importDialog.file && (
+                    <p className={`text-xs mt-1 ${importDialog.file.size === 0 ? "text-red-600 font-bold" : "text-slate-600"}`}>
+                      Selected: <strong>{importDialog.file.name}</strong> ({Math.round(importDialog.file.size / 1024)} KB)
+                      {importDialog.file.size === 0 && (
+                        <span className="block mt-1">⚠️ This file is 0 KB. On iPhone this means the file is in iCloud Drive but not downloaded. Open Files app, tap the file once to download it, then re-select. Or switch to <em>Paste CSV Text</em> above.</span>
+                      )}
+                    </p>
+                  )}
+                  <p className="text-xs text-slate-500 mt-2">
+                    Required columns: <code>Team #</code>, <code>Captain</code>, <code>First Name</code>, <code>Last Name</code>, <code>Email</code>.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <Label htmlFor="csv-text" className="font-bold text-[#1a365d]">Paste CSV content</Label>
+                  <Textarea
+                    id="csv-text"
+                    rows={10}
+                    placeholder="Team #,Captain,First Name,Last Name,Email,Phone,Association
+1,Yes,Jane,Doe,jane@x.com,555-1111,Local 4
+1,No,John,Smith,john@x.com,555-2222,Local 4"
+                    value={importDialog.csvText}
+                    onChange={(e) => setImportDialog((d) => ({ ...d, csvText: e.target.value }))}
+                    className="mt-1 font-mono text-xs"
+                    data-testid="csv-text-input"
+                  />
+                  <p className="text-xs text-slate-500 mt-2">
+                    Open your CSV in Files/Numbers/Excel, select all, copy, and paste here. Works around the iPhone iCloud 0KB issue.
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-2 py-2 text-sm" data-testid="import-result">
@@ -1183,10 +1235,10 @@ export default function AdminDashboard() {
           <DialogFooter>
             {!importDialog.result ? (
               <>
-                <Button variant="outline" onClick={() => setImportDialog({ open: false, file: null, importing: false, result: null })} disabled={importDialog.importing}>Cancel</Button>
+                <Button variant="outline" onClick={() => setImportDialog({ open: false, file: null, csvText: "", mode: "file", importing: false, result: null })} disabled={importDialog.importing}>Cancel</Button>
                 <Button
                   onClick={handleImportCsv}
-                  disabled={!importDialog.file || importDialog.importing}
+                  disabled={importDialog.importing || (importDialog.mode === "file" ? (!importDialog.file || importDialog.file.size === 0) : !importDialog.csvText.trim())}
                   className="bg-[#1a365d] text-white hover:bg-[#0f2342]"
                   data-testid="confirm-import-btn"
                 >
@@ -1194,7 +1246,7 @@ export default function AdminDashboard() {
                 </Button>
               </>
             ) : (
-              <Button onClick={() => setImportDialog({ open: false, file: null, importing: false, result: null })} className="bg-[#1a365d] text-white hover:bg-[#0f2342]">Close</Button>
+              <Button onClick={() => setImportDialog({ open: false, file: null, csvText: "", mode: "file", importing: false, result: null })} className="bg-[#1a365d] text-white hover:bg-[#0f2342]">Close</Button>
             )}
           </DialogFooter>
         </DialogContent>

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, BackgroundTasks, Header, UploadFile, File
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, BackgroundTasks, Header, UploadFile, File, Form
 from fastapi.responses import StreamingResponse, Response
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -695,17 +695,29 @@ async def admin_update_team(team_id: str, payload: dict, username: str = Depends
     return {"success": True, "message": "Team updated", "team_id": team_id, "updated": update}
 
 @app.post("/api/admin/import/csv")
-async def admin_import_csv(file: UploadFile = File(...), username: str = Depends(verify_admin)):
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="No file received")
-    raw = await file.read()
-    if not raw:
-        raise HTTPException(status_code=400, detail="The uploaded file is empty")
-    try: text = raw.decode("utf-8-sig")
-    except UnicodeDecodeError:
-        try: text = raw.decode("utf-16")
-        except UnicodeDecodeError: text = raw.decode("latin-1", errors="replace")
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
+async def admin_import_csv(
+    file: Optional[UploadFile] = File(None),
+    csv_text: Optional[str] = Form(None),
+    username: str = Depends(verify_admin)
+):
+    text = ""
+    if csv_text and csv_text.strip():
+        text = csv_text
+    elif file is not None:
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="No file received")
+        raw = await file.read()
+        if not raw:
+            raise HTTPException(status_code=400, detail="The uploaded file is empty (0 bytes). On iPhone this usually means the file is in iCloud Drive but not downloaded — open it in the Files app first to download, then re-select. Or paste the CSV text instead.")
+        try: text = raw.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            try: text = raw.decode("utf-16")
+            except UnicodeDecodeError: text = raw.decode("latin-1", errors="replace")
+    else:
+        raise HTTPException(status_code=400, detail="Please upload a CSV file or paste CSV text")
+    text = text.replace("\r\n", "\n").replace("\r", "\n").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="CSV content is empty")
     reader = csv.DictReader(io.StringIO(text))
     rows = list(reader)
     if not rows:
