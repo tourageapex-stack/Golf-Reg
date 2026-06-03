@@ -193,6 +193,7 @@ export default function AdminDashboard() {
   const [newRaffle, setNewRaffle] = useState({ winner_name: "", prize: "" });
   const [importDialog, setImportDialog] = useState({ open: false, file: null, csvText: "", mode: "file", importing: false, result: null });
   const [editTeamDialog, setEditTeamDialog] = useState({ open: false, team: null, team_number: "", starting_hole: "", saving: false });
+  const [editPlayerDialog, setEditPlayerDialog] = useState({ open: false, player: null, fields: {}, saving: false });
 
   const getAuthHeader = useCallback(() => {
     const auth = sessionStorage.getItem("adminAuth");
@@ -339,6 +340,48 @@ export default function AdminDashboard() {
       const msg = error.response?.data?.detail || "Failed to update team";
       toast.error(msg);
       setEditTeamDialog((d) => ({ ...d, saving: false }));
+    }
+  };
+
+  const openEditPlayer = (player) => {
+    setEditPlayerDialog({
+      open: true,
+      player,
+      fields: {
+        first_name: player.first_name || "",
+        last_name: player.last_name || "",
+        email: player.email || "",
+        phone: player.phone || "",
+        association: player.association || "",
+        is_captain: !!player.is_captain,
+      },
+      saving: false,
+    });
+  };
+
+  const handleSaveEditPlayer = async () => {
+    const headers = getAuthHeader();
+    if (!headers) return;
+    const f = editPlayerDialog.fields;
+    if (!f.first_name?.trim() || !f.last_name?.trim() || !f.email?.trim()) {
+      toast.error("First name, last name, and email are required");
+      return;
+    }
+    setEditPlayerDialog((d) => ({ ...d, saving: true }));
+    try {
+      await axios.put(
+        `${API}/admin/player/${editPlayerDialog.player.id}/update`,
+        f,
+        { headers }
+      );
+      toast.success("Player updated");
+      setEditPlayerDialog({ open: false, player: null, fields: {}, saving: false });
+      fetchData();
+    } catch (error) {
+      console.error("Update player error:", error);
+      const msg = error.response?.data?.detail || "Failed to update player";
+      toast.error(msg);
+      setEditPlayerDialog((d) => ({ ...d, saving: false }));
     }
   };
 
@@ -822,9 +865,15 @@ export default function AdminDashboard() {
                                 <span className="w-6 h-6 bg-[#1a365d] text-white text-xs rounded-full flex items-center justify-center">
                                   {idx + 1}
                                 </span>
-                                <span className="font-medium text-sm">
+                                <button
+                                  type="button"
+                                  onClick={() => openEditPlayer(player)}
+                                  className="font-medium text-sm text-[#1a365d] hover:text-[#f7dc00] hover:underline decoration-dotted text-left cursor-pointer"
+                                  data-testid={`edit-player-${player.id}-btn`}
+                                  title="Click to edit player info"
+                                >
                                   {player.first_name} {player.last_name}
-                                </span>
+                                </button>
                                 {player.is_captain && (
                                   <Crown className="h-4 w-4 text-[#f7dc00]" />
                                 )}
@@ -911,7 +960,15 @@ export default function AdminDashboard() {
                         <TableRow key={player.id} data-testid={`player-row-${player.id}`}>
                           <TableCell className="font-medium">{idx + 1}</TableCell>
                           <TableCell className="font-medium">
-                            {player.first_name} {player.last_name}
+                            <button
+                              type="button"
+                              onClick={() => openEditPlayer(player)}
+                              className="text-[#1a365d] hover:text-[#f7dc00] hover:underline decoration-dotted text-left cursor-pointer"
+                              data-testid={`edit-player-row-${player.id}-btn`}
+                              title="Click to edit player info"
+                            >
+                              {player.first_name} {player.last_name}
+                            </button>
                           </TableCell>
                           <TableCell className="text-sm">{player.email}</TableCell>
                           <TableCell className="text-sm">{player.phone}</TableCell>
@@ -1299,6 +1356,94 @@ export default function AdminDashboard() {
               data-testid="save-edit-team-btn"
             >
               {editTeamDialog.saving ? "Saving…" : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Player Dialog */}
+      <Dialog open={editPlayerDialog.open} onOpenChange={(open) => !editPlayerDialog.saving && setEditPlayerDialog((d) => ({ ...d, open }))}>
+        <DialogContent className="max-w-md" data-testid="edit-player-dialog">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-xl text-[#1a365d]">
+              Edit Player
+            </DialogTitle>
+            <DialogDescription>
+              Update signup info for {editPlayerDialog.player?.first_name} {editPlayerDialog.player?.last_name}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="ep-first" className="text-xs font-bold text-[#1a365d]">First Name *</Label>
+                <Input
+                  id="ep-first"
+                  value={editPlayerDialog.fields.first_name || ""}
+                  onChange={(e) => setEditPlayerDialog((d) => ({ ...d, fields: { ...d.fields, first_name: e.target.value } }))}
+                  data-testid="edit-player-first-input"
+                />
+              </div>
+              <div>
+                <Label htmlFor="ep-last" className="text-xs font-bold text-[#1a365d]">Last Name *</Label>
+                <Input
+                  id="ep-last"
+                  value={editPlayerDialog.fields.last_name || ""}
+                  onChange={(e) => setEditPlayerDialog((d) => ({ ...d, fields: { ...d.fields, last_name: e.target.value } }))}
+                  data-testid="edit-player-last-input"
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="ep-email" className="text-xs font-bold text-[#1a365d]">Email *</Label>
+              <Input
+                id="ep-email"
+                type="email"
+                value={editPlayerDialog.fields.email || ""}
+                onChange={(e) => setEditPlayerDialog((d) => ({ ...d, fields: { ...d.fields, email: e.target.value } }))}
+                data-testid="edit-player-email-input"
+              />
+            </div>
+            <div>
+              <Label htmlFor="ep-phone" className="text-xs font-bold text-[#1a365d]">Phone</Label>
+              <Input
+                id="ep-phone"
+                value={editPlayerDialog.fields.phone || ""}
+                onChange={(e) => setEditPlayerDialog((d) => ({ ...d, fields: { ...d.fields, phone: e.target.value } }))}
+                data-testid="edit-player-phone-input"
+              />
+            </div>
+            <div>
+              <Label htmlFor="ep-assoc" className="text-xs font-bold text-[#1a365d]">Association</Label>
+              <Input
+                id="ep-assoc"
+                value={editPlayerDialog.fields.association || ""}
+                onChange={(e) => setEditPlayerDialog((d) => ({ ...d, fields: { ...d.fields, association: e.target.value } }))}
+                data-testid="edit-player-assoc-input"
+                placeholder="e.g. Local 4"
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm font-medium text-[#1a365d] cursor-pointer pt-1">
+              <input
+                type="checkbox"
+                checked={!!editPlayerDialog.fields.is_captain}
+                onChange={(e) => setEditPlayerDialog((d) => ({ ...d, fields: { ...d.fields, is_captain: e.target.checked } }))}
+                className="h-4 w-4 accent-[#f7dc00]"
+                data-testid="edit-player-captain-checkbox"
+              />
+              <Crown className="h-4 w-4 text-[#f7dc00]" />
+              Team Captain
+              <span className="text-xs font-normal text-slate-500">(checking this demotes the previous captain)</span>
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditPlayerDialog((d) => ({ ...d, open: false }))} disabled={editPlayerDialog.saving}>Cancel</Button>
+            <Button
+              onClick={handleSaveEditPlayer}
+              disabled={editPlayerDialog.saving}
+              className="bg-[#1a365d] text-white hover:bg-[#0f2342]"
+              data-testid="save-edit-player-btn"
+            >
+              {editPlayerDialog.saving ? "Saving…" : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>

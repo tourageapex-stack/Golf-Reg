@@ -154,54 +154,51 @@ export default function Flyer() {
           data-testid="flyer-page"
         >
           {/* Top Band */}
-          <div className="bg-gradient-to-br from-[#1a365d] via-[#0f2342] to-[#1a365d] px-10 pt-10 pb-8 relative">
+          <div className="bg-gradient-to-br from-[#1a365d] via-[#0f2342] to-[#1a365d] px-10 pt-5 pb-4 relative">
             {/* Decorative accents */}
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#f7dc00]/10 rounded-full blur-2xl" />
             <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-[#f7dc00]/10 rounded-full blur-2xl" />
 
-            <div className="relative flex items-center gap-6">
+            <div className="relative flex items-center gap-5">
               <img
                 src={LOGO_URL}
                 alt="ILWU Local 4 Golf Tournament"
-                className="w-32 h-32 rounded-full shadow-2xl border-4 border-[#f7dc00] shrink-0 object-cover"
+                className="w-20 h-20 rounded-full shadow-2xl border-4 border-[#f7dc00] shrink-0 object-cover"
                 data-testid="flyer-logo"
               />
               <div className="flex-1">
-                <p className="text-[#f7dc00] font-bold uppercase tracking-widest text-sm mb-2">
+                <p className="text-[#f7dc00] font-bold uppercase tracking-widest text-xs mb-1">
                   ILWU Local 4 Presents
                 </p>
-                <h1 className="font-heading text-5xl font-bold text-white uppercase leading-none tracking-tight">
-                  Golf
+                <h1 className="font-heading text-3xl font-bold text-white uppercase leading-none tracking-tight">
+                  Golf <span className="text-[#f7dc00]">Tournament</span>
                 </h1>
-                <h1 className="font-heading text-5xl font-bold text-[#f7dc00] uppercase leading-none tracking-tight mt-1">
-                  Tournament
-                </h1>
-                <p className="text-white/80 mt-3 text-lg">Union brothers, sisters &amp; friends — join us on the course!</p>
+                <p className="text-white/80 mt-1 text-sm">Union brothers, sisters &amp; friends — join us on the course!</p>
               </div>
             </div>
           </div>
 
           {/* Hero Details Bar */}
-          <div className="bg-[#f7dc00] px-10 py-5 flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <Calendar className="h-7 w-7 text-[#1a365d]" />
+          <div className="bg-[#f7dc00] px-10 py-3 flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-6 w-6 text-[#1a365d]" />
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-[#1a365d]/70">Date</p>
-                <p className="font-heading text-xl font-bold text-[#1a365d]">September 3, 2026</p>
+                <p className="font-heading text-base font-bold text-[#1a365d]">September 3, 2026</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <MapPin className="h-7 w-7 text-[#1a365d]" />
+            <div className="flex items-center gap-2">
+              <MapPin className="h-6 w-6 text-[#1a365d]" />
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-[#1a365d]/70">Where</p>
-                <p className="font-heading text-xl font-bold text-[#1a365d]">Club Green Meadows</p>
+                <p className="font-heading text-base font-bold text-[#1a365d]">Club Green Meadows</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Clock className="h-7 w-7 text-[#1a365d]" />
+            <div className="flex items-center gap-2">
+              <Clock className="h-6 w-6 text-[#1a365d]" />
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-[#1a365d]/70">Schedule</p>
-                <p className="font-heading text-base font-bold text-[#1a365d] leading-tight">
+                <p className="font-heading text-xs font-bold text-[#1a365d] leading-tight">
                   Check-in 7:00 AM<br />Shotgun 8:00 AM
                 </p>
               </div>
@@ -209,101 +206,101 @@ export default function Flyer() {
           </div>
 
           {/* Body */}
-          <div className="px-10 py-8 space-y-8">
+          <div className="px-10 py-5 space-y-5">
             {/* Pricing */}
             <section>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-[#1a365d] rounded-lg flex items-center justify-center shrink-0">
-                  <DollarSign className="h-5 w-5 text-[#f7dc00]" />
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 bg-[#1a365d] rounded-lg flex items-center justify-center shrink-0">
+                  <DollarSign className="h-4 w-4 text-[#f7dc00]" />
                 </div>
-                <h2 className="font-heading text-2xl font-bold text-[#1a365d] uppercase">Entry Fee</h2>
+                <h2 className="font-heading text-lg font-bold text-[#1a365d] uppercase">Entry Fee</h2>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="border-2 border-[#f7dc00] bg-[#f7dc00]/10 rounded-xl p-5">
-                  <p className="text-xs font-bold uppercase tracking-widest text-[#1a365d]/70">Early Bird</p>
-                  <p className="font-heading text-4xl font-bold text-[#1a365d]">$125</p>
-                  <p className="text-sm text-[#1a365d]/80 mt-1">per player · before June 20</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="border-2 border-[#f7dc00] bg-[#f7dc00]/10 rounded-xl p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#1a365d]/70">Early Bird</p>
+                  <p className="font-heading text-2xl font-bold text-[#1a365d]">$125</p>
+                  <p className="text-xs text-[#1a365d]/80">per player · before June 20</p>
                 </div>
-                <div className="border-2 border-slate-300 bg-slate-50 rounded-xl p-5">
-                  <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Regular</p>
-                  <p className="font-heading text-4xl font-bold text-slate-700">$150</p>
-                  <p className="text-sm text-slate-600 mt-1">per player · starting June 20</p>
+                <div className="border-2 border-slate-300 bg-slate-50 rounded-xl p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Regular</p>
+                  <p className="font-heading text-2xl font-bold text-slate-700">$150</p>
+                  <p className="text-xs text-slate-600">per player · starting June 20</p>
                 </div>
               </div>
-              <p className="text-sm text-slate-600 mt-3">
+              <p className="text-xs text-slate-600 mt-2">
                 <span className="font-bold text-[#1a365d]">Format:</span> Best Ball Scramble · Shotgun start · 4-person teams · Max 25 teams
               </p>
-              <p className="mt-3 inline-flex items-center gap-2 bg-[#1a365d] text-[#f7dc00] font-bold uppercase tracking-wide text-sm px-4 py-2 rounded-full shadow-md" data-testid="lunch-callout">
-                <Gift className="h-4 w-4" />
+              <p className="mt-2 inline-flex items-center gap-2 bg-[#1a365d] text-[#f7dc00] font-bold uppercase tracking-wide text-xs px-3 py-1.5 rounded-full shadow-md" data-testid="lunch-callout">
+                <Gift className="h-3.5 w-3.5" />
                 Lunch Provided — Included with Entry
               </p>
             </section>
 
             {/* Prizes & Extras - two columns */}
-            <section className="grid grid-cols-2 gap-8">
+            <section className="grid grid-cols-2 gap-6">
               {/* Team Prizes */}
               <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-[#1a365d] rounded-lg flex items-center justify-center shrink-0">
-                    <Trophy className="h-5 w-5 text-[#f7dc00]" />
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 bg-[#1a365d] rounded-lg flex items-center justify-center shrink-0">
+                    <Trophy className="h-4 w-4 text-[#f7dc00]" />
                   </div>
-                  <h2 className="font-heading text-2xl font-bold text-[#1a365d] uppercase">Team Prizes</h2>
+                  <h2 className="font-heading text-lg font-bold text-[#1a365d] uppercase">Team Prizes</h2>
                 </div>
-                <ul className="space-y-2.5">
-                  <li className="flex items-center gap-3 bg-gradient-to-r from-[#f7dc00] to-[#ffe55c] rounded-lg px-4 py-2.5">
-                    <Trophy className="h-5 w-5 text-[#1a365d] shrink-0" />
-                    <span className="font-bold text-[#1a365d]">1st Place — Champions</span>
+                <ul className="space-y-1.5">
+                  <li className="flex items-center gap-2 bg-gradient-to-r from-[#f7dc00] to-[#ffe55c] rounded-lg px-3 py-1.5">
+                    <Trophy className="h-4 w-4 text-[#1a365d] shrink-0" />
+                    <span className="font-bold text-[#1a365d] text-xs">1st Place — Champions</span>
                   </li>
-                  <li className="flex items-center gap-3 bg-slate-200 rounded-lg px-4 py-2.5">
-                    <Trophy className="h-5 w-5 text-slate-700 shrink-0" />
-                    <span className="font-bold text-slate-800">2nd Place — Runners Up</span>
+                  <li className="flex items-center gap-2 bg-slate-200 rounded-lg px-3 py-1.5">
+                    <Trophy className="h-4 w-4 text-slate-700 shrink-0" />
+                    <span className="font-bold text-slate-800 text-xs">2nd Place — Runners Up</span>
                   </li>
-                  <li className="flex items-center gap-3 bg-amber-100 rounded-lg px-4 py-2.5">
-                    <Trophy className="h-5 w-5 text-amber-800 shrink-0" />
-                    <span className="font-bold text-amber-900">3rd Place — Third Overall</span>
+                  <li className="flex items-center gap-2 bg-amber-100 rounded-lg px-3 py-1.5">
+                    <Trophy className="h-4 w-4 text-amber-800 shrink-0" />
+                    <span className="font-bold text-amber-900 text-xs">3rd Place — Third Overall</span>
                   </li>
-                  <li className="flex items-center gap-3 bg-[#1a365d] rounded-lg px-4 py-2.5">
-                    <Gift className="h-5 w-5 text-[#f7dc00] shrink-0" />
-                    <span className="font-bold text-white">Last Place — Better Luck Next Year!</span>
+                  <li className="flex items-center gap-2 bg-[#1a365d] rounded-lg px-3 py-1.5">
+                    <Gift className="h-4 w-4 text-[#f7dc00] shrink-0" />
+                    <span className="font-bold text-white text-xs">Last Place — Better Luck Next Year!</span>
                   </li>
                 </ul>
               </div>
 
               {/* Competitions / Extras */}
               <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-[#1a365d] rounded-lg flex items-center justify-center shrink-0">
-                    <Star className="h-5 w-5 text-[#f7dc00]" />
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 bg-[#1a365d] rounded-lg flex items-center justify-center shrink-0">
+                    <Star className="h-4 w-4 text-[#f7dc00]" />
                   </div>
-                  <h2 className="font-heading text-2xl font-bold text-[#1a365d] uppercase">On The Course</h2>
+                  <h2 className="font-heading text-lg font-bold text-[#1a365d] uppercase">On The Course</h2>
                 </div>
-                <ul className="space-y-2.5">
-                  <li className="flex items-start gap-3 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5">
-                    <Zap className="h-5 w-5 text-[#1a365d] shrink-0 mt-0.5" />
+                <ul className="space-y-1.5">
+                  <li className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
+                    <Zap className="h-4 w-4 text-[#1a365d] shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-bold text-[#1a365d]">Long Drive Contest</p>
-                      <p className="text-xs text-slate-600">Longest drive wins</p>
+                      <p className="font-bold text-[#1a365d] text-xs">Long Drive Contest</p>
+                      <p className="text-[10px] text-slate-600">Longest drive wins</p>
                     </div>
                   </li>
-                  <li className="flex items-start gap-3 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5">
-                    <Target className="h-5 w-5 text-[#1a365d] shrink-0 mt-0.5" />
+                  <li className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
+                    <Target className="h-4 w-4 text-[#1a365d] shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-bold text-[#1a365d]">Closest to the Pin</p>
-                      <p className="text-xs text-slate-600">Precision counts</p>
+                      <p className="font-bold text-[#1a365d] text-xs">Closest to the Pin</p>
+                      <p className="text-[10px] text-slate-600">Precision counts</p>
                     </div>
                   </li>
-                  <li className="flex items-start gap-3 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5">
-                    <Star className="h-5 w-5 text-[#1a365d] shrink-0 mt-0.5" />
+                  <li className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
+                    <Star className="h-4 w-4 text-[#1a365d] shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-bold text-[#1a365d]">Raffle Prizes</p>
-                      <p className="text-xs text-slate-600">Drawings throughout the event</p>
+                      <p className="font-bold text-[#1a365d] text-xs">Raffle Prizes</p>
+                      <p className="text-[10px] text-slate-600">Drawings throughout the event</p>
                     </div>
                   </li>
-                  <li className="flex items-start gap-3 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5">
-                    <Gift className="h-5 w-5 text-[#1a365d] shrink-0 mt-0.5" />
+                  <li className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
+                    <Gift className="h-4 w-4 text-[#1a365d] shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-bold text-[#1a365d]">Mulligans</p>
-                      <p className="text-xs text-slate-600">Available for purchase</p>
+                      <p className="font-bold text-[#1a365d] text-xs">Mulligans</p>
+                      <p className="text-[10px] text-slate-600">Available for purchase</p>
                     </div>
                   </li>
                 </ul>
@@ -311,43 +308,43 @@ export default function Flyer() {
             </section>
 
             {/* Registration & Payment */}
-            <section className="grid grid-cols-2 gap-8">
+            <section className="grid grid-cols-2 gap-6">
               <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-[#1a365d] rounded-lg flex items-center justify-center shrink-0">
-                    <Users className="h-5 w-5 text-[#f7dc00]" />
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 bg-[#1a365d] rounded-lg flex items-center justify-center shrink-0">
+                    <Users className="h-4 w-4 text-[#f7dc00]" />
                   </div>
-                  <h2 className="font-heading text-2xl font-bold text-[#1a365d] uppercase">How To Register</h2>
+                  <h2 className="font-heading text-lg font-bold text-[#1a365d] uppercase">How To Register</h2>
                 </div>
-                <ol className="space-y-2 text-sm text-slate-700">
+                <ol className="space-y-1.5 text-xs text-slate-700">
                   <li className="flex gap-2">
-                    <span className="w-5 h-5 bg-[#1a365d] text-white rounded-full flex items-center justify-center text-xs font-bold shrink-0">1</span>
-                    <span>Visit <strong className="text-[#1a365d]">the tournament website</strong> (QR code below)</span>
+                    <span className="w-4 h-4 bg-[#1a365d] text-white rounded-full flex items-center justify-center text-[10px] font-bold shrink-0">1</span>
+                    <span>Visit <strong className="text-[#1a365d]">the tournament website</strong> (QR below)</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="w-5 h-5 bg-[#1a365d] text-white rounded-full flex items-center justify-center text-xs font-bold shrink-0">2</span>
-                    <span>Register as an <strong>individual</strong> or bring a <strong>team of 4</strong></span>
+                    <span className="w-4 h-4 bg-[#1a365d] text-white rounded-full flex items-center justify-center text-[10px] font-bold shrink-0">2</span>
+                    <span>Register as <strong>individual</strong> or bring a <strong>team of 4</strong></span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="w-5 h-5 bg-[#1a365d] text-white rounded-full flex items-center justify-center text-xs font-bold shrink-0">3</span>
-                    <span>Arrange payment at the <strong>Credit Union</strong> or <strong>the Hall</strong></span>
+                    <span className="w-4 h-4 bg-[#1a365d] text-white rounded-full flex items-center justify-center text-[10px] font-bold shrink-0">3</span>
+                    <span>Pay online or at the <strong>Credit Union</strong> / <strong>Hall</strong></span>
                   </li>
                 </ol>
               </div>
 
               <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-[#1a365d] rounded-lg flex items-center justify-center shrink-0">
-                    <DollarSign className="h-5 w-5 text-[#f7dc00]" />
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 bg-[#1a365d] rounded-lg flex items-center justify-center shrink-0">
+                    <DollarSign className="h-4 w-4 text-[#f7dc00]" />
                   </div>
-                  <h2 className="font-heading text-2xl font-bold text-[#1a365d] uppercase">Payment</h2>
+                  <h2 className="font-heading text-lg font-bold text-[#1a365d] uppercase">Payment</h2>
                 </div>
-                <div className="text-sm text-slate-700 space-y-2">
+                <div className="text-xs text-slate-700 space-y-1.5">
                   <p><strong className="text-[#1a365d]">Local 4 Credit Union</strong> or <strong className="text-[#1a365d]">the Hall</strong></p>
-                  <p className="bg-[#f7dc00]/30 border-l-4 border-[#f7dc00] px-3 py-2 text-xs">
+                  <p className="bg-[#f7dc00]/30 border-l-4 border-[#f7dc00] px-2 py-1.5 text-[10px] leading-tight">
                     <strong>Important:</strong> When paying at the Credit Union, please ask them to add a note with <strong>who the payment is for</strong>.
                   </p>
-                  <p className="bg-[#1a365d] text-[#f7dc00] font-bold uppercase tracking-wide text-sm px-3 py-2 rounded-lg text-center shadow-md" data-testid="online-payment-callout">
+                  <p className="bg-[#1a365d] text-[#f7dc00] font-bold uppercase tracking-wide text-xs px-2 py-1.5 rounded-lg text-center shadow-md" data-testid="online-payment-callout">
                     Pay Online Now Available!
                   </p>
                 </div>
@@ -356,27 +353,27 @@ export default function Flyer() {
           </div>
 
           {/* Footer Band with QR */}
-          <div className="bg-[#1a365d] px-10 py-6 flex items-center justify-between gap-6 text-white mt-auto">
-            <div className="flex items-center gap-4">
-              <div className="bg-white p-2 rounded-lg shrink-0" data-testid="flyer-qr">
+          <div className="bg-[#1a365d] px-10 py-4 flex items-center justify-between gap-4 text-white mt-auto">
+            <div className="flex items-center gap-3">
+              <div className="bg-white p-1.5 rounded-lg shrink-0" data-testid="flyer-qr">
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(SITE_URL)}`}
                   alt="Register QR code"
-                  className="w-24 h-24 block"
+                  className="w-20 h-20 block"
                 />
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#f7dc00]">Scan to Register</p>
-                <p className="font-heading text-xl font-bold leading-tight">Register Online</p>
-                <p className="text-xs text-white/70 break-all">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-[#f7dc00]">Scan to Register</p>
+                <p className="font-heading text-base font-bold leading-tight">Register Online</p>
+                <p className="text-[10px] text-white/70 break-all">
                   {SITE_URL.replace(/^https?:\/\//, "").replace(/\/$/, "")}
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <p className="font-heading text-lg font-bold uppercase">ILWU Local 4</p>
-              <p className="text-xs text-white/70">International Longshore &amp; Warehouse Union</p>
-              <p className="text-[10px] text-white/50 mt-1">Questions? Contact the Hall.</p>
+              <p className="font-heading text-base font-bold uppercase">ILWU Local 4</p>
+              <p className="text-[10px] text-white/70">International Longshore &amp; Warehouse Union</p>
+              <p className="text-[9px] text-white/50 mt-0.5">Questions? Contact the Hall.</p>
             </div>
           </div>
         </div>
@@ -386,14 +383,16 @@ export default function Flyer() {
       <style>{`
         .flyer {
           width: 8.5in;
-          min-height: 11in;
+          height: 11in;
+          max-height: 11in;
           display: flex;
           flex-direction: column;
+          overflow: hidden;
         }
         @media print {
           @page { size: letter; margin: 0; }
           body { margin: 0; background: white !important; }
-          .flyer { box-shadow: none !important; width: 8.5in; min-height: 11in; }
+          .flyer { box-shadow: none !important; width: 8.5in; height: 11in; max-height: 11in; overflow: hidden; }
         }
       `}</style>
     </div>

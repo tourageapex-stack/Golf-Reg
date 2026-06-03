@@ -1074,6 +1074,41 @@ async def delete_raffle_winner(winner_id: str, username: str = Depends(verify_ad
         raise HTTPException(status_code=404, detail="Winner not found")
     return {"success": True, "message": "Raffle winner deleted"}
 
+@api_router.put("/admin/player/{player_id}/update")
+async def admin_update_player(player_id: str, payload: dict, username: str = Depends(verify_admin)):
+    """Admin: edit a player's signup info."""
+    player = await db.players.find_one({"id": player_id}, {"_id": 0})
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+
+    allowed_fields = ["first_name", "last_name", "email", "phone", "association", "is_captain"]
+    update = {}
+    for key in allowed_fields:
+        if key in payload and payload[key] is not None:
+            val = payload[key]
+            if isinstance(val, str):
+                val = val.strip()
+            update[key] = val
+
+    if "email" in update and update["email"] != player.get("email"):
+        existing = await db.players.find_one({"email": update["email"], "id": {"$ne": player_id}})
+        if existing:
+            raise HTTPException(status_code=409, detail="Another player is already using this email")
+
+    if not update:
+        return {"success": True, "message": "No changes"}
+
+    # If making this player captain, demote any current captain on the same team
+    if update.get("is_captain") and player.get("team_id"):
+        await db.players.update_many(
+            {"team_id": player["team_id"], "id": {"$ne": player_id}, "is_captain": True},
+            {"$set": {"is_captain": False}}
+        )
+
+    await db.players.update_one({"id": player_id}, {"$set": update})
+    return {"success": True, "message": "Player updated", "player_id": player_id, "updated": update}
+
+
 @api_router.put("/admin/team/{team_id}/update")
 async def admin_update_team(team_id: str, payload: dict, username: str = Depends(verify_admin)):
     """Admin: update a team's team_number and/or starting_hole."""
