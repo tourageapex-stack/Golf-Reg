@@ -37,7 +37,7 @@ const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND
 const LOGO_URL = "/images/ilwu_logo.png";
 
 // Build a hole-indexed structure: [{ hole: 1, teams: [teamA, teamB?] }, ...]
-// Teams assigned to holes 1-7 may have a 2nd team (overflow teams 19-25)
+// Teams assigned to holes 1-3 may have a 2nd team (overflow teams 19-21)
 function buildHoleGroupings(teams) {
   const byHole = new Map();
   for (let h = 1; h <= 18; h++) byHole.set(h, []);
@@ -1316,16 +1316,16 @@ export default function AdminDashboard() {
             <DialogTitle className="font-heading text-xl text-[#1a365d]">
               Edit Team {editTeamDialog.team?.team_number}
             </DialogTitle>
-            <DialogDescription>Change the team number or starting hole. Number must be unique (1–25).</DialogDescription>
+            <DialogDescription>Change the team number or starting hole. Number must be unique (1–21).</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
-              <Label htmlFor="edit-team-number" className="font-bold text-[#1a365d]">Team Number (1–25)</Label>
+              <Label htmlFor="edit-team-number" className="font-bold text-[#1a365d]">Team Number (1–21)</Label>
               <Input
                 id="edit-team-number"
                 type="number"
                 min={1}
-                max={25}
+                max={21}
                 value={editTeamDialog.team_number}
                 onChange={(e) => setEditTeamDialog((d) => ({ ...d, team_number: e.target.value }))}
                 data-testid="edit-team-number-input"
@@ -1343,7 +1343,7 @@ export default function AdminDashboard() {
                 data-testid="edit-starting-hole-input"
               />
               <p className="text-xs text-slate-500 mt-1">
-                Convention: Teams 1–18 start on their matching hole. Teams 19–25 share holes 1–7 as the 2nd group.
+                Convention: Teams 1–18 start on their matching hole. Teams 19–21 share holes 1–3 as the 2nd group.
               </p>
             </div>
           </div>

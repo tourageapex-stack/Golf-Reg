@@ -78,8 +78,11 @@ class TestTournamentInfo:
         
         for field in required_fields:
             assert field in data, f"Missing required field: {field}"
+
+        assert data["max_teams"] == 21, f"Expected max_teams=21, got {data['max_teams']}"
+        assert data["max_players_per_team"] == 4, f"Expected max_players_per_team=4, got {data['max_players_per_team']}"
         
-        print(f"SUCCESS: All {len(required_fields)} required fields present")
+        print(f"SUCCESS: All {len(required_fields)} required fields present; capacity is 21 teams / 84 players")
 
 
 class TestIndividualRegistration:
@@ -106,7 +109,7 @@ class TestIndividualRegistration:
         
         assert data["success"] == True, "Expected success=True"
         assert "team_number" in data, "Missing team_number in response"
-        assert data["team_number"] >= 1 and data["team_number"] <= 25, f"Team number {data['team_number']} out of range 1-25"
+        assert data["team_number"] >= 1 and data["team_number"] <= 21, f"Team number {data['team_number']} out of range 1-21"
         
         print(f"SUCCESS: Individual registered to Team {data['team_number']}, captain={data.get('is_captain', False)}")
         return data

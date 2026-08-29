@@ -3,7 +3,15 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MapPin, Calendar, DollarSign, Users, Trophy, Shield, Target, Star, Award, Zap, Gift, Clock, CreditCard, Sparkles, CalendarPlus, Share2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { MapPin, Calendar, DollarSign, Users, Trophy, Shield, Target, Star, Award, Zap, Gift, Clock, CreditCard, Sparkles, CalendarPlus, Share2, AlertTriangle } from "lucide-react";
 
 const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : '/api';
 
@@ -14,6 +22,7 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const [tournamentInfo, setTournamentInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [capacityNoticeOpen, setCapacityNoticeOpen] = useState(true);
 
   useEffect(() => {
     const fetchInfo = async () => {
@@ -29,7 +38,7 @@ export default function LandingPage() {
     fetchInfo();
   }, []);
 
-  const maxTeams = tournamentInfo?.max_teams || 25;
+  const maxTeams = tournamentInfo?.max_teams || 21;
   const totalSpots = maxTeams * 4;
   const spotsRemaining = tournamentInfo
     ? Math.max(0, totalSpots - tournamentInfo.current_players)
@@ -37,6 +46,40 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen">
+      <Dialog open={capacityNoticeOpen} onOpenChange={setCapacityNoticeOpen}>
+        <DialogContent
+          className="max-w-md border-t-4 border-[#f7dc00]"
+          data-testid="capacity-notice-dialog"
+        >
+          <DialogHeader className="sm:text-center">
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-[#f7dc00]/20">
+              <AlertTriangle className="h-6 w-6 text-[#1a365d]" aria-hidden="true" />
+            </div>
+            <DialogTitle className="font-heading text-2xl text-[#1a365d] uppercase tracking-tight">
+              Registration Update
+            </DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-3 pt-2 text-base text-slate-700">
+                <p>
+                  Due to club cart orders at Green Meadows, teams are now capped to 21 total teams.
+                </p>
+                <p className="text-lg text-[#1a365d]" data-testid="capacity-notice-remaining">
+                  <strong>1 team remains for registration.</strong>
+                </p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center">
+            <Button
+              onClick={() => setCapacityNoticeOpen(false)}
+              className="bg-[#1a365d] text-white hover:bg-[#0f2342] font-bold uppercase tracking-wide"
+              data-testid="capacity-notice-dismiss"
+            >
+              Got it
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
@@ -185,7 +228,7 @@ export default function LandingPage() {
               <Users className="h-10 w-10 text-[#1a365d] mb-4" />
               <p className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-2">Format</p>
               <p className="font-heading text-2xl font-bold text-[#1a365d]">Best Ball Scramble Shotgun start 4-Person Teams</p>
-              <p className="text-slate-600 mt-2">Max 25 teams · Lunch included</p>
+              <p className="text-slate-600 mt-2">Max 21 teams · Lunch included</p>
             </Card>
           </div>
         </div>
