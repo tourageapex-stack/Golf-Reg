@@ -49,7 +49,8 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen">
-      <Dialog open={capacityNoticeOpen && !loading && !registrationFull} onOpenChange={setCapacityNoticeOpen}>
+      {!loading && !registrationFull && (
+      <Dialog open={capacityNoticeOpen} onOpenChange={setCapacityNoticeOpen}>
         <DialogContent
           className="max-w-md border-t-4 border-[#f7dc00]"
           data-testid="capacity-notice-dialog"
@@ -87,6 +88,7 @@ export default function LandingPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      )}
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
