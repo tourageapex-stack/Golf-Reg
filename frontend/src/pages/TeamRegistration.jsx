@@ -27,6 +27,7 @@ const emptyPlayer = {
 export default function TeamRegistration() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [checkingCapacity, setCheckingCapacity] = useState(true);
   const [tournamentInfo, setTournamentInfo] = useState(null);
   const [players, setPlayers] = useState([{ ...emptyPlayer }]);
 
@@ -35,8 +36,10 @@ export default function TeamRegistration() {
       setTournamentInfo(res.data);
       if (isRegistrationFull(res.data)) {
         navigate("/registration-full", { replace: true });
+        return;
       }
-    }).catch(() => {});
+      setCheckingCapacity(false);
+    }).catch(() => setCheckingCapacity(false));
   }, [navigate]);
 
   const addPlayer = () => {
@@ -111,6 +114,10 @@ export default function TeamRegistration() {
 
   const pricePerPlayer = tournamentInfo?.price_per_player || 150;
   const totalPrice = players.length === 4 ? pricePerPlayer * 4 : players.length * pricePerPlayer;
+
+  if (checkingCapacity) {
+    return <div className="min-h-screen bg-[#1a365d]" data-testid="team-capacity-check" />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">

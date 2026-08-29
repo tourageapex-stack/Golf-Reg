@@ -17,6 +17,7 @@ const LOGO_URL = "/images/ilwu_logo.png";
 export default function IndividualRegistration() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [checkingCapacity, setCheckingCapacity] = useState(true);
   const [tournamentInfo, setTournamentInfo] = useState(null);
   const [availableTeams, setAvailableTeams] = useState([]);
   const [joinExisting, setJoinExisting] = useState(false);
@@ -35,8 +36,10 @@ export default function IndividualRegistration() {
       setTournamentInfo(res.data);
       if (isRegistrationFull(res.data)) {
         navigate("/registration-full", { replace: true });
+        return;
       }
-    }).catch(() => {});
+      setCheckingCapacity(false);
+    }).catch(() => setCheckingCapacity(false));
     axios.get(`${API}/teams/available`).then(res => setAvailableTeams(res.data)).catch(() => {});
   }, [navigate]);
 
@@ -98,6 +101,10 @@ export default function IndividualRegistration() {
       setLoading(false);
     }
   };
+
+  if (checkingCapacity) {
+    return <div className="min-h-screen bg-[#1a365d]" data-testid="individual-capacity-check" />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
