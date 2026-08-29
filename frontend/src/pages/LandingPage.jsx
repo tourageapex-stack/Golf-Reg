@@ -29,7 +29,7 @@ export default function LandingPage() {
     fetchInfo();
   }, []);
 
-  const maxTeams = tournamentInfo?.max_teams || 25;
+  const maxTeams = tournamentInfo?.max_teams || 21;
   const totalSpots = maxTeams * 4;
   const spotsRemaining = tournamentInfo
     ? Math.max(0, totalSpots - tournamentInfo.current_players)
@@ -185,7 +185,7 @@ export default function LandingPage() {
               <Users className="h-10 w-10 text-[#1a365d] mb-4" />
               <p className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-2">Format</p>
               <p className="font-heading text-2xl font-bold text-[#1a365d]">Best Ball Scramble Shotgun start 4-Person Teams</p>
-              <p className="text-slate-600 mt-2">Max 25 teams · Lunch included</p>
+              <p className="text-slate-600 mt-2">Max 21 teams · Lunch included</p>
             </Card>
           </div>
         </div>

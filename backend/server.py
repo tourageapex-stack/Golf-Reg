@@ -46,9 +46,9 @@ GMAIL_APP_PASSWORD = os.environ.get('GMAIL_APP_PASSWORD', '')
 EMAIL_ENABLED = bool(GMAIL_USER and GMAIL_APP_PASSWORD)
 
 # Constants
-MAX_TEAMS = 25
+MAX_TEAMS = 21
 PRIMARY_TEAMS = 18  # Teams 1-18 start on holes 1-18 (one per hole)
-OVERFLOW_HOLES = 7  # Teams 19-25 start on holes 1-7 (second team on that hole)
+OVERFLOW_HOLES = 3  # Teams 19-21 start on holes 1-3 (second team on that hole)
 MAX_PLAYERS_PER_TEAM = 4
 EARLY_BIRD_PRICE = 125
 REGULAR_PRICE = 150
@@ -134,7 +134,7 @@ class Player(PlayerBase):
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class TeamBase(BaseModel):
-    team_number: int  # 1-25 (1-18 primary, 19-25 overflow)
+    team_number: int  # 1-21 (1-18 primary, 19-21 overflow)
 
 class Team(TeamBase):
     model_config = ConfigDict(extra="ignore")
@@ -463,7 +463,7 @@ async def assign_team_slot():
     """Randomly assign a team number and starting hole.
 
     - Teams 1-18: random number from 1-18, starting hole = team number
-    - Teams 19-25: random number from 19-25, starting hole = random 1-7
+    - Teams 19-21: random number from 19-21, starting hole = random 1-3
     Returns (team_number, starting_hole) or (None, None) if full.
     """
     used_numbers = set(await db.teams.distinct("team_number"))
