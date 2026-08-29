@@ -63,8 +63,8 @@ export default function LandingPage() {
                 <p>
                   Due to club cart orders at Green Meadows, teams are now capped to 21 total teams.
                 </p>
-                <p className="text-lg font-bold text-[#1a365d]" data-testid="capacity-notice-remaining">
-                  1 team remains for registration.
+                <p className="text-lg text-[#1a365d]" data-testid="capacity-notice-remaining">
+                  <strong>1 team remains for registration.</strong>
                 </p>
               </div>
             </DialogDescription>
