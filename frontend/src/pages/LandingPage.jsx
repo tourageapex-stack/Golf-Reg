@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { isRegistrationFull, teamsRemaining as getTeamsRemaining } from "@/lib/registration";
 import { MapPin, Calendar, DollarSign, Users, Trophy, Shield, Target, Star, Award, Zap, Gift, Clock, CreditCard, Sparkles, CalendarPlus, Share2, AlertTriangle } from "lucide-react";
 
 const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : '/api';
@@ -43,9 +44,12 @@ export default function LandingPage() {
   const spotsRemaining = tournamentInfo
     ? Math.max(0, totalSpots - tournamentInfo.current_players)
     : totalSpots;
+  const registrationFull = isRegistrationFull(tournamentInfo);
+  const teamsRemaining = getTeamsRemaining(tournamentInfo);
 
   return (
     <div className="min-h-screen">
+      {!loading && !registrationFull && (
       <Dialog open={capacityNoticeOpen} onOpenChange={setCapacityNoticeOpen}>
         <DialogContent
           className="max-w-md border-t-4 border-[#f7dc00]"
@@ -64,7 +68,11 @@ export default function LandingPage() {
                   Due to club cart orders at Green Meadows, teams are now capped to 21 total teams.
                 </p>
                 <p className="text-lg text-[#1a365d]" data-testid="capacity-notice-remaining">
-                  <strong>1 team remains for registration.</strong>
+                  <strong>
+                    {teamsRemaining === 1
+                      ? "1 team remains for registration."
+                      : `${teamsRemaining ?? maxTeams} teams remain for registration.`}
+                  </strong>
                 </p>
               </div>
             </DialogDescription>
@@ -80,6 +88,7 @@ export default function LandingPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      )}
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
@@ -120,23 +129,35 @@ export default function LandingPage() {
           
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animation-delay-400">
-            <Button
-              onClick={() => navigate("/register/individual")}
-              className="bg-[#f7dc00] text-[#1a365d] hover:bg-[#ffe55c] font-bold uppercase tracking-wide py-6 px-8 text-lg shadow-xl hover:shadow-2xl transition-all duration-300"
-              data-testid="register-individual-btn"
-            >
-              <Users className="mr-2 h-5 w-5" />
-              Register Individual
-            </Button>
-            <Button
-              onClick={() => navigate("/register/team")}
-              variant="outline"
-              className="border-2 border-white text-white hover:bg-white hover:text-[#1a365d] font-bold uppercase tracking-wide py-6 px-8 text-lg transition-all duration-300"
-              data-testid="register-team-btn"
-            >
-              <Trophy className="mr-2 h-5 w-5" />
-              Register Team
-            </Button>
+            {registrationFull ? (
+              <Button
+                onClick={() => navigate("/registration-full")}
+                className="bg-[#f7dc00] text-[#1a365d] hover:bg-[#ffe55c] font-bold uppercase tracking-wide py-6 px-8 text-lg shadow-xl hover:shadow-2xl transition-all duration-300"
+                data-testid="registration-full-btn"
+              >
+                Registration is Full
+              </Button>
+            ) : (
+              <>
+                <Button
+                  onClick={() => navigate("/register/individual")}
+                  className="bg-[#f7dc00] text-[#1a365d] hover:bg-[#ffe55c] font-bold uppercase tracking-wide py-6 px-8 text-lg shadow-xl hover:shadow-2xl transition-all duration-300"
+                  data-testid="register-individual-btn"
+                >
+                  <Users className="mr-2 h-5 w-5" />
+                  Register Individual
+                </Button>
+                <Button
+                  onClick={() => navigate("/register/team")}
+                  variant="outline"
+                  className="border-2 border-white text-white hover:bg-white hover:text-[#1a365d] font-bold uppercase tracking-wide py-6 px-8 text-lg transition-all duration-300"
+                  data-testid="register-team-btn"
+                >
+                  <Trophy className="mr-2 h-5 w-5" />
+                  Register Team
+                </Button>
+              </>
+            )}
             <Button
               onClick={() => navigate("/leaderboard")}
               variant="outline"
@@ -161,7 +182,9 @@ export default function LandingPage() {
           {!loading && (
             <div className="mt-8 animate-fade-in-up animation-delay-400">
               <span className="inline-block bg-white/10 backdrop-blur-sm text-white px-6 py-2 rounded-full text-sm font-semibold border border-white/20">
-                {spotsRemaining > 0 ? `${spotsRemaining} spots remaining` : "Registration Full"}
+                {registrationFull || spotsRemaining <= 0
+                  ? "Registration Full"
+                  : `${spotsRemaining} spots remaining`}
               </span>
             </div>
           )}

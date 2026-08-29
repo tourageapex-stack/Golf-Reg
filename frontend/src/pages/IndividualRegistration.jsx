@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, User, AlertCircle, DollarSign, Clock, Users, CreditCard, Sparkles } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { isRegistrationFull } from "@/lib/registration";
 
 const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : '/api';
 const LOGO_URL = "/images/ilwu_logo.png";
@@ -16,6 +17,7 @@ const LOGO_URL = "/images/ilwu_logo.png";
 export default function IndividualRegistration() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [checkingCapacity, setCheckingCapacity] = useState(true);
   const [tournamentInfo, setTournamentInfo] = useState(null);
   const [availableTeams, setAvailableTeams] = useState([]);
   const [joinExisting, setJoinExisting] = useState(false);
@@ -30,9 +32,16 @@ export default function IndividualRegistration() {
   });
 
   useEffect(() => {
-    axios.get(`${API}/tournament-info`).then(res => setTournamentInfo(res.data)).catch(() => {});
+    axios.get(`${API}/tournament-info`).then(res => {
+      setTournamentInfo(res.data);
+      if (isRegistrationFull(res.data)) {
+        navigate("/registration-full", { replace: true });
+        return;
+      }
+      setCheckingCapacity(false);
+    }).catch(() => setCheckingCapacity(false));
     axios.get(`${API}/teams/available`).then(res => setAvailableTeams(res.data)).catch(() => {});
-  }, []);
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -92,6 +101,10 @@ export default function IndividualRegistration() {
       setLoading(false);
     }
   };
+
+  if (checkingCapacity) {
+    return <div className="min-h-screen bg-[#1a365d]" data-testid="individual-capacity-check" />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">

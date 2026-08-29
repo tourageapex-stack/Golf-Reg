@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Users, AlertCircle, DollarSign, Plus, Trash2, Crown, Clock, CreditCard, Sparkles } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { isRegistrationFull } from "@/lib/registration";
 import { Badge } from "@/components/ui/badge";
 
 const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : '/api';
@@ -26,12 +27,20 @@ const emptyPlayer = {
 export default function TeamRegistration() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [checkingCapacity, setCheckingCapacity] = useState(true);
   const [tournamentInfo, setTournamentInfo] = useState(null);
   const [players, setPlayers] = useState([{ ...emptyPlayer }]);
 
   useEffect(() => {
-    axios.get(`${API}/tournament-info`).then(res => setTournamentInfo(res.data)).catch(() => {});
-  }, []);
+    axios.get(`${API}/tournament-info`).then(res => {
+      setTournamentInfo(res.data);
+      if (isRegistrationFull(res.data)) {
+        navigate("/registration-full", { replace: true });
+        return;
+      }
+      setCheckingCapacity(false);
+    }).catch(() => setCheckingCapacity(false));
+  }, [navigate]);
 
   const addPlayer = () => {
     if (players.length < 4) {
@@ -105,6 +114,10 @@ export default function TeamRegistration() {
 
   const pricePerPlayer = tournamentInfo?.price_per_player || 150;
   const totalPrice = players.length === 4 ? pricePerPlayer * 4 : players.length * pricePerPlayer;
+
+  if (checkingCapacity) {
+    return <div className="min-h-screen bg-[#1a365d]" data-testid="team-capacity-check" />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
