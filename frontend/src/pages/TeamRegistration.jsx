@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Users, AlertCircle, DollarSign, Plus, Trash2, Crown, Clock, CreditCard, Sparkles } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { isRegistrationFull } from "@/lib/registration";
 import { Badge } from "@/components/ui/badge";
 
 const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : '/api';
@@ -30,8 +31,13 @@ export default function TeamRegistration() {
   const [players, setPlayers] = useState([{ ...emptyPlayer }]);
 
   useEffect(() => {
-    axios.get(`${API}/tournament-info`).then(res => setTournamentInfo(res.data)).catch(() => {});
-  }, []);
+    axios.get(`${API}/tournament-info`).then(res => {
+      setTournamentInfo(res.data);
+      if (isRegistrationFull(res.data)) {
+        navigate("/registration-full", { replace: true });
+      }
+    }).catch(() => {});
+  }, [navigate]);
 
   const addPlayer = () => {
     if (players.length < 4) {

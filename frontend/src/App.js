@@ -11,6 +11,7 @@ import CheckIn from "@/pages/CheckIn";
 import Leaderboard from "@/pages/Leaderboard";
 import Flyer from "@/pages/Flyer";
 import PayOnline from "@/pages/PayOnline";
+import RegistrationFull from "@/pages/RegistrationFull";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/register/individual" element={<IndividualRegistration />} />
           <Route path="/register/team" element={<TeamRegistration />} />
+          <Route path="/registration-full" element={<RegistrationFull />} />
           <Route path="/confirmation" element={<Confirmation />} />
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />

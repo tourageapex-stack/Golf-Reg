@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, User, AlertCircle, DollarSign, Clock, Users, CreditCard, Sparkles } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { isRegistrationFull } from "@/lib/registration";
 
 const API = process.env.REACT_APP_BACKEND_URL ? `${process.env.REACT_APP_BACKEND_URL}/api` : '/api';
 const LOGO_URL = "/images/ilwu_logo.png";
@@ -30,9 +31,14 @@ export default function IndividualRegistration() {
   });
 
   useEffect(() => {
-    axios.get(`${API}/tournament-info`).then(res => setTournamentInfo(res.data)).catch(() => {});
+    axios.get(`${API}/tournament-info`).then(res => {
+      setTournamentInfo(res.data);
+      if (isRegistrationFull(res.data)) {
+        navigate("/registration-full", { replace: true });
+      }
+    }).catch(() => {});
     axios.get(`${API}/teams/available`).then(res => setAvailableTeams(res.data)).catch(() => {});
-  }, []);
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
