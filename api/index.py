@@ -18,6 +18,10 @@ from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
+try:
+    from email_templates import build_announcement_email
+except ImportError:
+    from api.email_templates import build_announcement_email
 
 # MongoDB connection
 mongo_url = os.environ.get('MONGO_URL', '')
@@ -165,6 +169,11 @@ class DashboardStats(BaseModel):
     paid_players: int
     unpaid_players: int
     checked_in_players: int
+
+class AnnounceRequest(BaseModel):
+    offset: int = 0
+    limit: int = 5
+    dry_run: bool = False
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -348,6 +357,28 @@ body {{ font-family: Arial, sans-serif; color: #1a365d; }}
         return True
     except Exception as e:
         logging.error(f"Failed to send payment email: {e}")
+        return False
+
+def send_announcement_email(to_email: str, player_name: str, team_number: Optional[int] = None, starting_hole: Optional[int] = None):
+    """Send rain-or-shine tournament announcement using the confirmation email look."""
+    if not EMAIL_ENABLED:
+        logger.warning("Email not configured - skipping announcement email")
+        return False
+    try:
+        subject, text, html = build_announcement_email(player_name, team_number, starting_hole)
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = GMAIL_USER
+        msg['To'] = to_email
+        msg.attach(MIMEText(text, 'plain'))
+        msg.attach(MIMEText(html, 'html'))
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
+            server.send_message(msg)
+        logger.info(f"Announcement email sent to {to_email}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send announcement email to {to_email}: {str(e)}")
         return False
 
 # Helper functions
@@ -636,6 +667,69 @@ async def get_all_players(username: str = Depends(verify_admin)):
             team = await db.teams.find_one({"id": player["team_id"]}, {"_id": 0})
             player["team_number"] = team["team_number"] if team else None
     return players
+
+@app.post("/api/admin/announce")
+async def send_tournament_announcement(req: AnnounceRequest, username: str = Depends(verify_admin)):
+    """Email all registered players a rain-or-shine announcement.
+
+    Batched so Vercel Hobby's 10s limit is not exceeded. The admin UI loops until done.
+    """
+    if not EMAIL_ENABLED and not req.dry_run:
+        raise HTTPException(status_code=503, detail="Email is not configured")
+    offset = max(0, req.offset)
+    limit = min(max(1, req.limit), 8)
+
+    players = await db.players.find({}, {"_id": 0}).sort("registration_order", 1).to_list(500)
+    teams = await db.teams.find({}, {"_id": 0, "id": 1, "team_number": 1, "starting_hole": 1}).to_list(100)
+    team_map = {t["id"]: t for t in teams}
+
+    recipients = []
+    seen = set()
+    for p in players:
+        email = (p.get("email") or "").strip().lower()
+        if not email or email in seen:
+            continue
+        seen.add(email)
+        team = team_map.get(p.get("team_id") or "")
+        recipients.append({
+            "email": email,
+            "name": f"{p.get('first_name', '')} {p.get('last_name', '')}".strip() or "Golfer",
+            "team_number": team.get("team_number") if team else None,
+            "starting_hole": team.get("starting_hole") if team else None,
+        })
+
+    total = len(recipients)
+    batch = recipients[offset:offset + limit]
+    sent = 0
+    failed = 0
+    failed_emails = []
+    if not req.dry_run:
+        for r in batch:
+            ok = send_announcement_email(r["email"], r["name"], r["team_number"], r["starting_hole"])
+            if ok:
+                sent += 1
+            else:
+                failed += 1
+                failed_emails.append(r["email"])
+    next_offset = offset + len(batch)
+    return {
+        "success": True,
+        "email_enabled": EMAIL_ENABLED,
+        "dry_run": req.dry_run,
+        "total": total,
+        "offset": offset,
+        "limit": limit,
+        "batch_size": len(batch),
+        "sent": sent,
+        "failed": failed,
+        "failed_emails": failed_emails,
+        "next_offset": next_offset,
+        "done": next_offset >= total,
+        "recipients_preview": [
+            {"name": r["name"], "email": r["email"], "team_number": r["team_number"]}
+            for r in batch
+        ] if req.dry_run else [],
+    }
 
 @app.delete("/api/admin/player/{player_id}")
 async def delete_player(player_id: str, username: str = Depends(verify_admin)):
