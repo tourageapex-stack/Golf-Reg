@@ -10,7 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Users, Trophy, LogOut, Trash2, Crown, Home, 
   RefreshCw, CheckCircle, AlertCircle, Download, FileSpreadsheet, Upload,
-  DollarSign, XCircle, UserCheck, Printer, BarChart3, Target, Zap, Star, Gift, Plus, Flag, Edit2
+  DollarSign, XCircle, UserCheck, Printer, BarChart3, Target, Zap, Star, Gift, Plus, Flag, Edit2,
+  Mail, CloudRain
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -194,6 +195,16 @@ export default function AdminDashboard() {
   const [importDialog, setImportDialog] = useState({ open: false, file: null, csvText: "", mode: "file", importing: false, result: null });
   const [editTeamDialog, setEditTeamDialog] = useState({ open: false, team: null, team_number: "", starting_hole: "", saving: false });
   const [editPlayerDialog, setEditPlayerDialog] = useState({ open: false, player: null, fields: {}, saving: false });
+  const [announceDialog, setAnnounceDialog] = useState({
+    open: false,
+    loadingPreview: false,
+    sending: false,
+    total: 0,
+    sent: 0,
+    failed: 0,
+    result: null,
+    error: null,
+  });
 
   const getAuthHeader = useCallback(() => {
     const auth = sessionStorage.getItem("adminAuth");
@@ -382,6 +393,71 @@ export default function AdminDashboard() {
       const msg = error.response?.data?.detail || "Failed to update player";
       toast.error(msg);
       setEditPlayerDialog((d) => ({ ...d, saving: false }));
+    }
+  };
+
+  const openAnnounceDialog = async () => {
+    const headers = getAuthHeader();
+    if (!headers) return;
+    setAnnounceDialog({
+      open: true,
+      loadingPreview: true,
+      sending: false,
+      total: 0,
+      sent: 0,
+      failed: 0,
+      result: null,
+      error: null,
+    });
+    try {
+      const res = await axios.post(`${API}/admin/announce`, { dry_run: true, offset: 0, limit: 5 }, { headers });
+      setAnnounceDialog((d) => ({
+        ...d,
+        loadingPreview: false,
+        total: res.data.total || 0,
+        error: res.data.email_enabled === false ? "Email is not configured on the server." : null,
+      }));
+    } catch (error) {
+      const msg = error.response?.data?.detail || "Could not load recipient list";
+      setAnnounceDialog((d) => ({ ...d, loadingPreview: false, error: msg }));
+    }
+  };
+
+  const sendAnnouncement = async () => {
+    const headers = getAuthHeader();
+    if (!headers) return;
+    setAnnounceDialog((d) => ({ ...d, sending: true, sent: 0, failed: 0, result: null, error: null }));
+    let offset = 0;
+    let totalSent = 0;
+    let totalFailed = 0;
+    let total = announceDialog.total;
+    try {
+      while (true) {
+        const res = await axios.post(
+          `${API}/admin/announce`,
+          { offset, limit: 5, dry_run: false },
+          { headers, timeout: 20000 }
+        );
+        totalSent += res.data.sent || 0;
+        totalFailed += res.data.failed || 0;
+        total = res.data.total;
+        offset = res.data.next_offset;
+        setAnnounceDialog((d) => ({
+          ...d,
+          total,
+          sent: totalSent,
+          failed: totalFailed,
+        }));
+        if (res.data.done) break;
+      }
+      const summary = `Sent to ${totalSent} player${totalSent === 1 ? "" : "s"}` +
+        (totalFailed ? ` (${totalFailed} failed)` : "");
+      setAnnounceDialog((d) => ({ ...d, sending: false, result: summary }));
+      toast.success(summary);
+    } catch (error) {
+      const msg = error.response?.data?.detail || "Failed to send announcement";
+      setAnnounceDialog((d) => ({ ...d, sending: false, error: msg }));
+      toast.error(msg);
     }
   };
 
@@ -699,6 +775,14 @@ export default function AdminDashboard() {
             <Button variant="outline" onClick={printRoster} className="border-[#1a365d] text-[#1a365d]" data-testid="print-roster-btn">
               <Printer className="h-4 w-4 mr-2" />
               Print Roster
+            </Button>
+            <Button
+              onClick={openAnnounceDialog}
+              className="bg-[#f7dc00] text-[#1a365d] hover:bg-[#ffe55c] font-bold"
+              data-testid="email-players-btn"
+            >
+              <Mail className="h-4 w-4 mr-2" />
+              Email Players
             </Button>
           </div>
           <div className="flex gap-3">
@@ -1161,6 +1245,93 @@ export default function AdminDashboard() {
 
         </Tabs>
       </main>
+
+      {/* Rain-or-shine announcement */}
+      <Dialog
+        open={announceDialog.open}
+        onOpenChange={(open) => !announceDialog.sending && setAnnounceDialog((d) => ({ ...d, open }))}
+      >
+        <DialogContent className="max-w-md" data-testid="announce-dialog">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-xl text-[#1a365d] flex items-center gap-2">
+              <CloudRain className="h-5 w-5" />
+              Rain or Shine Announcement
+            </DialogTitle>
+            <DialogDescription>
+              Sends every registered player an email that matches the registration confirmation look.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2" data-testid="announce-dialog-body">
+            {announceDialog.loadingPreview ? (
+              <p className="text-sm text-slate-600 flex items-center gap-2">
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Loading recipient list…
+              </p>
+            ) : (
+              <>
+                <div className="bg-[#1a365d] text-white rounded-xl p-4">
+                  <p className="text-xs uppercase tracking-widest text-[#f7dc00] font-bold mb-1">Message</p>
+                  <p className="font-heading text-lg font-bold">Thursday 9/3 — rain or shine</p>
+                  <p className="text-sm text-white/80 mt-1">
+                    Unfortunately it looks like rain. Come prepared. Check-in 7:00 AM · Tee off 8:00 AM.
+                  </p>
+                </div>
+                <p className="text-sm text-slate-700">
+                  This will email <strong data-testid="announce-recipient-count">{announceDialog.total}</strong> registered
+                  player{announceDialog.total === 1 ? "" : "s"} (unique addresses).
+                </p>
+                {announceDialog.sending && (
+                  <p className="text-sm text-[#1a365d] font-semibold" data-testid="announce-progress">
+                    Sending… {announceDialog.sent}
+                    {announceDialog.total ? ` / ${announceDialog.total}` : ""}
+                    {announceDialog.failed ? ` (${announceDialog.failed} failed)` : ""}
+                  </p>
+                )}
+                {announceDialog.result && (
+                  <p className="text-sm text-[#2d5a27] font-semibold" data-testid="announce-result">
+                    {announceDialog.result}
+                  </p>
+                )}
+                {announceDialog.error && (
+                  <p className="text-sm text-red-600" data-testid="announce-error">
+                    {announceDialog.error}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setAnnounceDialog((d) => ({ ...d, open: false }))}
+              disabled={announceDialog.sending}
+              data-testid="announce-cancel-btn"
+            >
+              {announceDialog.result ? "Close" : "Cancel"}
+            </Button>
+            {!announceDialog.result && (
+              <Button
+                onClick={sendAnnouncement}
+                disabled={announceDialog.loadingPreview || announceDialog.sending || !announceDialog.total || !!announceDialog.error}
+                className="bg-[#f7dc00] text-[#1a365d] hover:bg-[#ffe55c] font-bold"
+                data-testid="announce-send-btn"
+              >
+                {announceDialog.sending ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Sending…
+                  </>
+                ) : (
+                  <>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Send to {announceDialog.total || "all"} players
+                  </>
+                )}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ ...deleteDialog, open: false })}>
